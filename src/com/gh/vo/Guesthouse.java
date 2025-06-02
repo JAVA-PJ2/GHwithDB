@@ -1,26 +1,21 @@
 package com.gh.vo;
 
-import java.util.ArrayList;
-
 public class Guesthouse {
 	private String name;
 	private char mbti;
 	private int priceWeekday;
 	private int priceWeekend;
 	private int maxCapacity;
-	private ArrayList<Booking> bookings;
 	
 	public Guesthouse(){}
 	
-	public Guesthouse(String name, char mbti, int priceWeekday, int priceWeekend, int maxCapacity,
-			ArrayList<Booking> bookings) {
+	public Guesthouse(String name, char mbti, int priceWeekday, int priceWeekend, int maxCapacity) {
 		super();
 		this.name = name;
 		this.mbti = mbti;
 		this.priceWeekday = priceWeekday;
 		this.priceWeekend = priceWeekend;
 		this.maxCapacity = maxCapacity;
-		this.bookings = bookings;
 	}
 
 	public String getName() {
@@ -62,18 +57,10 @@ public class Guesthouse {
 	public void setMaxCapacity(int maxCapacity) {
 		this.maxCapacity = maxCapacity;
 	}
-
-	public ArrayList<Booking> getBookings() {
-		return bookings;
-	}
-
-	public void setBookings(ArrayList<Booking> bookings) {
-		this.bookings = bookings;
-	}
 	
 	@Override
 	public String toString() {
 		return "Guesthouse [name=" + name + ", mbti=" + mbti + ", priceWeekday=" + priceWeekday + ", priceWeekend="
-				+ priceWeekend + ", maxCapacity=" + maxCapacity + ", bookings=" + bookings + "]";
+				+ priceWeekend + ", maxCapacity=" + maxCapacity + "]";
 	}
 }
