@@ -1,5 +1,7 @@
 package com.gh.dao.impl;
 
-public interface GHDAOImpl {
+import com.gh.dao.GHDAO;
+
+public class GHDAOImpl implements GHDAO {
 
 }
