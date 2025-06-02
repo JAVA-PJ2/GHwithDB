@@ -1,66 +1,79 @@
 package com.gh.vo;
 
+import java.util.ArrayList;
+
 public class Guesthouse {
-	private String gh_name;
-	private String mbti;
-	private int price_weekday;
-	private int price_weekend;
-	private int max_capacity;
+	private String name;
+	private char mbti;
+	private int priceWeekday;
+	private int priceWeekend;
+	private int maxCapacity;
+	private ArrayList<Booking> bookings;
 	
 	public Guesthouse(){}
 	
-	public Guesthouse(String gh_name, String mbti, int price_weekday, int price_weekend, int max_capacity) {
+	public Guesthouse(String name, char mbti, int priceWeekday, int priceWeekend, int maxCapacity,
+			ArrayList<Booking> bookings) {
 		super();
-		this.gh_name = gh_name;
+		this.name = name;
 		this.mbti = mbti;
-		this.price_weekday = price_weekday;
-		this.price_weekend = price_weekend;
-		this.max_capacity = max_capacity;
-	}
-	
-	public String getGh_name() {
-		return gh_name;
+		this.priceWeekday = priceWeekday;
+		this.priceWeekend = priceWeekend;
+		this.maxCapacity = maxCapacity;
+		this.bookings = bookings;
 	}
 
-	public void setGh_name(String gh_name) {
-		this.gh_name = gh_name;
+	public String getName() {
+		return name;
 	}
 
-	public String getMbti() {
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public char getMbti() {
 		return mbti;
 	}
 
-	public void setMbti(String mbti) {
+	public void setMbti(char mbti) {
 		this.mbti = mbti;
 	}
 
-	public int getPrice_weekday() {
-		return price_weekday;
+	public int getPriceWeekday() {
+		return priceWeekday;
 	}
 
-	public void setPrice_weekday(int price_weekday) {
-		this.price_weekday = price_weekday;
+	public void setPriceWeekday(int priceWeekday) {
+		this.priceWeekday = priceWeekday;
 	}
 
-	public int getPrice_weekend() {
-		return price_weekend;
+	public int getPriceWeekend() {
+		return priceWeekend;
 	}
 
-	public void setPrice_weekend(int price_weekend) {
-		this.price_weekend = price_weekend;
+	public void setPriceWeekend(int priceWeekend) {
+		this.priceWeekend = priceWeekend;
 	}
 
-	public int getMax_capacity() {
-		return max_capacity;
+	public int getMaxCapacity() {
+		return maxCapacity;
 	}
 
-	public void setMax_capacity(int max_capacity) {
-		this.max_capacity = max_capacity;
+	public void setMaxCapacity(int maxCapacity) {
+		this.maxCapacity = maxCapacity;
 	}
 
+	public ArrayList<Booking> getBookings() {
+		return bookings;
+	}
+
+	public void setBookings(ArrayList<Booking> bookings) {
+		this.bookings = bookings;
+	}
+	
 	@Override
 	public String toString() {
-		return "Guesthouse [gh_name=" + gh_name + ", mbti=" + mbti + ", price_weekday=" + price_weekday
-				+ ", price_weekend=" + price_weekend + ", max_capacity=" + max_capacity + "]";
+		return "Guesthouse [name=" + name + ", mbti=" + mbti + ", priceWeekday=" + priceWeekday + ", priceWeekend="
+				+ priceWeekend + ", maxCapacity=" + maxCapacity + ", bookings=" + bookings + "]";
 	}
 }
