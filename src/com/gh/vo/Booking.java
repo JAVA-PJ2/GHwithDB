@@ -3,18 +3,18 @@ package com.gh.vo;
 public class Booking {
 	private String bookingId;
 	private int peopleCount;
-	private String checkIn;
+	private String checkInDate;
 	private int nights;
 	private String bookingStatus;
 	private int totalPrice;
 	public Booking() {
 	}
 	
-	public Booking(String bookingId, int peopleCount, String checkIn, int nights, String bookingStatus, int totalPrice) {
+	public Booking(String bookingId, int peopleCount, String checkInDate, int nights, String bookingStatus, int totalPrice) {
 		super();
 		this.bookingId = bookingId;
 		this.peopleCount = peopleCount;
-		this.checkIn = checkIn;
+		this.checkInDate = checkInDate;
 		this.nights = nights;
 		this.bookingStatus = bookingStatus;
 		this.totalPrice = totalPrice;
@@ -36,12 +36,12 @@ public class Booking {
 		this.peopleCount = peopleCount;
 	}
 
-	public String getCheckIn() {
-		return checkIn;
+	public String getcheckInDate() {
+		return checkInDate;
 	}
 
-	public void setCheckIn(String checkIn) {
-		this.checkIn = checkIn;
+	public void setcheckInDate(String checkInDate) {
+		this.checkInDate = checkInDate;
 	}
 
 	public int getNights() {
@@ -70,7 +70,7 @@ public class Booking {
 
 	@Override
 	public String toString() {
-		return "Booking [bookingId=" + bookingId + ", peopleCount=" + peopleCount + ", checkIn=" + checkIn + ", nights=" + nights
+		return "Booking [bookingId=" + bookingId + ", peopleCount=" + peopleCount + ", checkInDate=" + checkInDate + ", nights=" + nights
 				+ ", bookingStatus=" + bookingStatus + ", totalPrice=" + totalPrice + "]";
 	}
 	
