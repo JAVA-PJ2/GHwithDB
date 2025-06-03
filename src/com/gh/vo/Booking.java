@@ -2,17 +2,17 @@ package com.gh.vo;
 
 public class Booking {
 	private String bookingId; // 칼럼에는 booking_id
-	private int peopleCount; // 칼럼에는 people
+	private int people; // 칼럼에는 people
 	private String checkInDate; // 칼럼에는 check_in
 	private int nights;
 	private int totalPrice; // 칼럼에는 total_price
 	
 	public Booking(){}
 	
-	public Booking(String bookingId, int peopleCount, String checkInDate, int nights, int totalPrice) {
+	public Booking(String bookingId, int people, String checkInDate, int nights, int totalPrice) {
 		super();
 		this.bookingId = bookingId;
-		this.peopleCount = peopleCount;
+		this.people = people;
 		this.checkInDate = checkInDate;
 		this.nights = nights;
 		this.totalPrice = totalPrice;
@@ -26,12 +26,12 @@ public class Booking {
 		this.bookingId = bookingId;
 	}
 
-	public int getPeopleCount() {
-		return peopleCount;
+	public int getpeople() {
+		return people;
 	}
 
-	public void setPeopleCount(int peopleCount) {
-		this.peopleCount = peopleCount;
+	public void setpeople(int people) {
+		this.people = people;
 	}
 
 	public String getcheckInDate() {
@@ -60,7 +60,7 @@ public class Booking {
 
 	@Override
 	public String toString() {
-		return "Booking [bookingId=" + bookingId + ", peopleCount=" + peopleCount + ", checkInDate=" + checkInDate + ", nights=" + nights
+		return "Booking [bookingId=" + bookingId + ", people=" + people + ", checkInDate=" + checkInDate + ", nights=" + nights
 				+ ", bookingStatus=" + ", totalPrice=" + totalPrice + "]";
 	}
 	
