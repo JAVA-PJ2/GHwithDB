@@ -3,23 +3,14 @@ package com.gh.vo;
 import java.util.ArrayList;
 
 public class Client {
-	private String id;
-	private String password;
-	private String name;
+	private String id; // 칼럼에는 client_id
+	private String password; // 칼럼에는 client_password
+	private String name; // 칼럼에는 client_name
 	private char mbti;
 	private char tier;
 	private ArrayList<Booking> bookings;
 	
 	public Client() {}
-
-	public Client(String id, String password, String name, char mbti, char tier) {
-		super();
-		this.id = id;
-		this.password = password;
-		this.name = name;
-		this.mbti = mbti;
-		this.tier = tier;
-	}
 
 	public Client(String id, String password, String name, char mbti, char tier, ArrayList<Booking> bookings) {
 		super();
