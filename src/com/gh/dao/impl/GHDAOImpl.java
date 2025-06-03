@@ -11,6 +11,14 @@ import com.gh.dao.GHDAO;
 import config.ServerInfo;
 
 public class GHDAOImpl implements GHDAO {
+	private static GHDAOImpl dao = new GHDAOImpl();
+	
+	private GHDAOImpl(){}
+	
+	public static GHDAOImpl getInstance() {
+		return dao;
+	}
+	
 	//공통로직
 	private Connection getConnect() throws SQLException {
 		Connection conn = DriverManager.getConnection(ServerInfo.URL, ServerInfo.USER, ServerInfo.PASS);
