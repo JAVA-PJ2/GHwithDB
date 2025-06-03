@@ -1,8 +1,8 @@
 package com.gh.vo;
 
 public class Manager {
-	private String managerID;
-	private String managerPassword;
+	private String managerID; // 칼럼에는 manager_id
+	private String managerPassword; // 칼럼에는 manager_password
 	
 	public Manager() {}
 

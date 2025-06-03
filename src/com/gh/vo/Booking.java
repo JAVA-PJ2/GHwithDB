@@ -1,11 +1,11 @@
 package com.gh.vo;
 
 public class Booking {
-	private String bookingId;
-	private int peopleCount;
-	private String checkInDate;
+	private String bookingId; // 칼럼에는 booking_id
+	private int peopleCount; // 칼럼에는 people
+	private String checkInDate; // 칼럼에는 check_in
 	private int nights;
-	private int totalPrice;
+	private int totalPrice; // 칼럼에는 total_price
 	
 	public Booking(){}
 	

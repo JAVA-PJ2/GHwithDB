@@ -1,11 +1,11 @@
 package com.gh.vo;
 
 public class Guesthouse {
-	private String name;
+	private String name; // 칼럼에는 gh_name
 	private char mbti;
-	private int priceWeekday;
-	private int priceWeekend;
-	private int maxCapacity;
+	private int priceWeekday; // 칼럼에는 price_weekday
+	private int priceWeekend; // 칼럼에는 price_weekend
+	private int maxCapacity; // 칼럼에는 max_capacity
 	
 	public Guesthouse(){}
 	
