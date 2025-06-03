@@ -5,18 +5,16 @@ public class Booking {
 	private int peopleCount;
 	private String checkInDate;
 	private int nights;
-	private String bookingStatus;
 	private int totalPrice;
-	public Booking() {
-	}
 	
-	public Booking(String bookingId, int peopleCount, String checkInDate, int nights, String bookingStatus, int totalPrice) {
+	public Booking(){}
+	
+	public Booking(String bookingId, int peopleCount, String checkInDate, int nights, int totalPrice) {
 		super();
 		this.bookingId = bookingId;
 		this.peopleCount = peopleCount;
 		this.checkInDate = checkInDate;
 		this.nights = nights;
-		this.bookingStatus = bookingStatus;
 		this.totalPrice = totalPrice;
 	}
 	
@@ -52,14 +50,6 @@ public class Booking {
 		this.nights = nights;
 	}
 
-	public String getBookingStatus() {
-		return bookingStatus;
-	}
-
-	public void setBookingStatus(String bookingStatus) {
-		this.bookingStatus = bookingStatus;
-	}
-
 	public int getTotalPrice() {
 		return totalPrice;
 	}
@@ -71,7 +61,7 @@ public class Booking {
 	@Override
 	public String toString() {
 		return "Booking [bookingId=" + bookingId + ", peopleCount=" + peopleCount + ", checkInDate=" + checkInDate + ", nights=" + nights
-				+ ", bookingStatus=" + bookingStatus + ", totalPrice=" + totalPrice + "]";
+				+ ", bookingStatus=" + ", totalPrice=" + totalPrice + "]";
 	}
 	
 }
