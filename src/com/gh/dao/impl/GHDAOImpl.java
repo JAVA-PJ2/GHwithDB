@@ -11,9 +11,16 @@ import com.gh.dao.GHDAO;
 import config.ServerInfo;
 
 public class GHDAOImpl implements GHDAO {
-	private static GHDAOImpl dao = new GHDAOImpl();
+	// 싱글톤
+	private static GHDAOImpl dao = new GHDAOImpl("127.0.0.1");
 	
-	private GHDAOImpl(){}
+	private GHDAOImpl(String serverIp) {
+		try {
+			Class.forName(ServerInfo.DRIVER_NAME);
+		}catch(ClassNotFoundException e) {
+			System.out.println(e.getMessage());
+		}
+	}
 	
 	public static GHDAOImpl getInstance() {
 		return dao;
