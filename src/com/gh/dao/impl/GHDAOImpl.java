@@ -17,6 +17,7 @@ public class GHDAOImpl implements GHDAO {
 	private GHDAOImpl(String serverIp) {
 		try {
 			Class.forName(ServerInfo.DRIVER_NAME);
+			System.out.println("드라이버 로딩 성공...");
 		}catch(ClassNotFoundException e) {
 			System.out.println(e.getMessage());
 		}
