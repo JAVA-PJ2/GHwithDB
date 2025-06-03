@@ -1,7 +1,5 @@
 package com.gh.test;
 
-import java.sql.DriverManager;
-
 import config.ServerInfo;
 
 public class GHDAOTest {
