@@ -361,10 +361,10 @@ public class GHDAOImpl implements GHDAO {
 	                       "  cancel_rate ASC";
 
 	        ps = conn.prepareStatement(query);
-	        ps.setInt(1, price); // price_weekday
-	        ps.setInt(2, price); // price_weekend
-	        ps.setString(3, String.valueOf(mbti)); // 정렬 조건
-	        ps.setString(4, String.valueOf(mbti)); // 정렬 조건
+	        ps.setInt(1, price); 
+	        ps.setInt(2, price); 
+	        ps.setString(3, String.valueOf(mbti)); 
+	        ps.setString(4, String.valueOf(mbti));
 
 	        rs = ps.executeQuery();
 
