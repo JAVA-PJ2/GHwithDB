@@ -90,30 +90,41 @@ public class GHDAOImpl implements GHDAO {
 		}
 	}
 	
-	@Override
-	private double calcDiscountByTier(Client c) {
+	private double calcDiscountByTier(Client c) throws SQLException {
+		double dc = 0.0;
+		
 		if(c.getTier() == null) {
 			applyTier(c);
 		}
 		
-		return 0;
+		Character tier = c.getTier();
+		
+		switch(tier) {
+		case 'B':
+			dc = 0.05;
+			break;
+		case 'S':
+			dc = 0.1;
+			break;
+		case 'G':
+			dc = 0.15;
+			break;
+		default:
+			dc = 0.0;
+		}
+		
+		return dc;
 	}
-	
-	@Override
-	private double calcDiscountByTier(Client c) {
-
-		return 0;
-	}
 
 	@Override
-	private boolean canBook(Guesthouse gh, LocalDate checkIn, int nights, int people) {
-		// TODO Auto-generated method stub
+	private boolean canBook(String ghName, LocalDate checkIn, int nights, int people) {
+		
 		return false;
 	}
 
 	@Override
 	private int getDayBetweenBooking(LocalDate previousCheckIn) {
-		// TODO Auto-generated method stub
+		
 		return 0;
 	}
 
