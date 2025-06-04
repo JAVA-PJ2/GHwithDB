@@ -658,38 +658,71 @@ public class GHDAOImpl implements GHDAO {
 
 	@Override
 	public String analzeTendencyByTier(Client c) throws SQLException {
-		if (c == null || c.getId() == null) {
-			return "알 수 없음";
-		}
-
 		Connection conn = null;
-		PreparedStatement ps = null;
-		ResultSet rs = null;
+	    PreparedStatement ps = null;
+	    PreparedStatement psTier = null;
+	    ResultSet rs = null;
+	    ResultSet rsTier = null;
+	    StringBuilder result = new StringBuilder();
+	    
+	    char[] tiers = {'b', 's', 'g'};
 
-		char tier = c.getTier(); // tier는 'b', 's', 'g'
-		String tendency = null;
+	    try {
+	        conn = getConnect();
 
-		try {
-			conn = getConnect();
+	        // 1. DB에서 distinct tier 값들 먼저 가져오기
+	        String tierQuery = "SELECT DISTINCT tier FROM client WHERE tier IN ('b', 's', 'g')";
+	        psTier = conn.prepareStatement(tierQuery);
+	        rsTier = psTier.executeQuery();
 
-			String query = "SELECT " + "CASE c.tier " + "    WHEN 'b' THEN 'bronze' " + "    WHEN 's' THEN 'silver' "
-					+ "    WHEN 'g' THEN 'gold' " + "    ELSE '알 수 없음' " + "END AS tier_name, "
-					+ "c.mbti, COUNT(*) AS cnt " + "FROM client c " + "JOIN booking b ON c.client_id = b.client_id "
-					+ "WHERE c.tier = ? AND c.mbti IN ('E', 'I') " + "GROUP BY tier_name, c.mbti "
-					+ "ORDER BY cnt DESC " + "LIMIT 1";
+	        // 2. 대표 성향 쿼리 준비
+	        String query = 
+	            "SELECT " +
+	            "CASE c.tier " +
+	            "    WHEN 'b' THEN 'bronze' " +
+	            "    WHEN 's' THEN 'silver' " +
+	            "    WHEN 'g' THEN 'gold' " +
+	            "    ELSE '알 수 없음' " +
+	            "END AS tier_name, " +
+	            "c.mbti, COUNT(*) AS cnt " +
+	            "FROM client c " +
+	            "JOIN booking b ON c.client_id = b.client_id " +
+	            "WHERE c.tier = ? AND c.mbti IN ('E', 'I') " +
+	            "GROUP BY tier_name, c.mbti " +
+	            "ORDER BY cnt DESC " +
+	            "LIMIT 1";
 
-			ps = conn.prepareStatement(query);
-			ps.setString(1, tier == '\u0000' ? "\0" : String.valueOf(tier)); // char → String
-			rs = ps.executeQuery();
+	        ps = conn.prepareStatement(query);
 
-			if (rs.next()) {
-				tendency = rs.getString("mbti");
-			}
-		} finally {
-			closeAll(rs, ps, conn);
-		}
+	        for (char tier : tiers) {
+	            System.out.println("현재 tier: " + tier);
+	            ps.setString(1, String.valueOf(tier));
+	            rs = ps.executeQuery();
 
-		return (tendency == null) ? "알 수 없음" : tendency;
+	            String tierStr = switch (tier) {
+	                case 'b' -> "bronze";
+	                case 's' -> "silver";
+	                case 'g' -> "gold";
+	                default -> "null";
+	            };
+
+	            if (rs.next()) {
+	                String mbti = rs.getString("mbti");
+	                System.out.println("쿼리 결과 mbti: " + mbti);
+	                result.append(String.format("%s 등급의 대표 성향: %s\n", tierStr, mbti));
+	            } else {
+	                System.out.println("쿼리 결과 없음");
+	                result.append(String.format("%s 등급의 대표 성향: 알 수 없음\n", tierStr));
+	            }
+
+	            rs.close();
+	        }
+	    } finally {
+	        closeAll(rsTier, psTier, null);
+	        closeAll(null, ps, conn);
+	    }
+
+	    return result.toString();
 	}
 
 	@Override
@@ -738,36 +771,43 @@ public class GHDAOImpl implements GHDAO {
 
 	@Override
 	public Map<String, Double> calAverageStayByTier() throws DMLException, SQLException {
-		Map<String, Double> result = new LinkedHashMap<>();
-
+Map<String, Double> result = new LinkedHashMap<>();
+		
 		Connection conn = null;
 		PreparedStatement ps = null;
 		ResultSet rs = null;
-
+		
 		try {
 			conn = getConnect();
-			String query = "SELECT " + "CASE c.tier " + "    WHEN 'b' THEN 'bronze' " + "    WHEN 's' THEN 'silver' "
-					+ "    WHEN 'g' THEN 'gold' " + "    ELSE '알 수 없음' " + "END AS tier_name, "
-					+ "AVG(b.nights) AS avg_nights " + // 숙박 일수 평균
-					"FROM client c " + "JOIN booking b ON c.client_id = b.client_id " + "GROUP BY c.tier "
-					+ "ORDER BY avg_nights DESC";
+			
+			String query = 
+					"SELECT " +
+	        	    "CASE c.tier " +
+	        	    "    WHEN 'b' THEN 'bronze' " +
+	        	    "    WHEN 's' THEN 'silver' " +
+	        	    "    WHEN 'g' THEN 'gold' " +
+	        	    "    ELSE '알 수 없음' " +
+	        	    "END AS tier_name, " +
+	        	    "AVG(b.nights) AS avg_nights " + // 숙박 일수 평균
+	        	    "FROM client c " +
+	        	    "JOIN booking b ON c.client_id = b.client_id " +
+	        	    "GROUP BY c.tier " +
+	        	    "ORDER BY avg_nights DESC";
 			ps = conn.prepareStatement(query);
 			rs = ps.executeQuery();
-
+			
 			while (rs.next()) {
 				String tierName = rs.getString("tier_name");
 				double avgNights = rs.getDouble("avg_nights");
 				result.put(tierName, avgNights);
 			}
-
+			
+		} catch (SQLException e) {
+	        throw new DMLException("등급별 숙박 일수 평균을 구하는 중 오류 발생: " + e.getMessage());
 		} finally {
-			try {
-				closeAll(rs, ps, conn);
-			} catch (SQLException e) {
-				throw new DMLException("등급별 숙박 일 수 평균을 구할 수 없습니다..");
-			}
+			closeAll(rs, ps, conn);
 		}
-
+		
 		return result;
 	}
 
