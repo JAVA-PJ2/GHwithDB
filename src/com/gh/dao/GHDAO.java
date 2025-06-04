@@ -21,6 +21,7 @@ public interface GHDAO {
 	ArrayList<Guesthouse> searchAvailableGH(String checkIn, String checkout, int peopleCnt, int price, char mbti);
 	void printMyInfo(Client c);
 	
+	
 	/*
 	 * Manager
 	 */
@@ -34,4 +35,5 @@ public interface GHDAO {
 	ArrayList<Client> getAllClients();
 	ArrayList<Booking> getAllBookings();
 	String analzeTendencyByTier(Client c) throws SQLException;
+	ArrayList<Guesthouse> recommendGH(int price, char mbti);
 }
