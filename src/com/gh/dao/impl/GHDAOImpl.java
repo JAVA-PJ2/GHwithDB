@@ -824,9 +824,54 @@ Map<String, Double> result = new LinkedHashMap<>();
 	}
 
 	@Override
-	public ArrayList<Client> getAllClients() {
-		// TODO Auto-generated method stub
-		return null;
+	public ArrayList<Client> getAllClients() throws SQLException {
+		ArrayList<Client> clients = new ArrayList<Client>();
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			conn = getConnect();
+			String query = "SELECT client_id, client_password, client_name, ifnull(mbti, 'X') mbti, ifnull(tier, 'U') tier FROM client";
+			ps = conn.prepareStatement(query);
+			rs = ps.executeQuery();
+			while (rs.next()) {
+				String clientId = rs.getString("client_id");
+				clients.add(new Client(clientId,
+									   rs.getString("client_password"),
+									   rs.getString("client_name"),
+									   rs.getString("mbti").charAt(0),
+									   rs.getString("tier").charAt(0),
+									   getBookings(clientId)));
+			}
+		}finally {
+			closeAll(rs, ps, conn);
+		}
+		return clients;
+	}
+	public ArrayList<Booking> getBookings(String clientId) throws SQLException {
+		ArrayList<Booking> bookings = new ArrayList<Booking>();
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			conn = getConnect();
+			String query = "SELECT * FROM booking WHERE client_id=?";
+			ps = conn.prepareStatement(query);
+			ps.setString(1, clientId);
+			rs = ps.executeQuery();
+			while (rs.next()) {
+				bookings.add(new Booking(rs.getString("booking_id"),
+										 clientId,
+										 rs.getString("gh_name"),
+										 rs.getInt("people"),
+										 rs.getDate("check_in").toLocalDate(),
+										 rs.getInt("nights"),
+										 rs.getInt("total_price")));
+			}
+		}finally {
+			closeAll(rs, ps, conn);
+		}
+		return bookings;
 	}
 
 	@Override
