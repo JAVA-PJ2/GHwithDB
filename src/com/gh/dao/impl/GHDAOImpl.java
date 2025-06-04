@@ -119,7 +119,19 @@ public class GHDAOImpl implements GHDAO {
 	}
 
 	public boolean canBook(Guesthouse gh, LocalDate checkIn, int nights, int people) throws SQLException {
-	    Connection conn = null;
+	    // 2025.05.05 ~ 2025.06.29 사이만 예약 가능
+		LocalDate minDate = LocalDate.of(2025, 5, 5);
+	    LocalDate maxDate = LocalDate.of(2025, 6, 29);
+	    
+	    LocalDate lastDate = checkIn.plusDays(nights -1);
+	    
+	    if(checkIn.isBefore(minDate) || lastDate.isAfter(maxDate)) {
+	    	System.out.println("[2025.05.05 ~ 2025.06.29 사이만 예약 가능합니다]");
+	    	return false;
+	    }
+		
+		// DB에서 예약 확인 후 예약 자리가 남았는지 확인
+		Connection conn = null;
 	    PreparedStatement ps = null;
 	    ResultSet rs = null;
 
@@ -160,12 +172,15 @@ public class GHDAOImpl implements GHDAO {
 	                return false;
 	            }
 	        }
-
+	        
+	        // 그 날 이 게하에 예약이 아예 없다면 로직 처리
 	        if (empty) {
 	            return people <= gh.getMaxCapacity();
 	        }
 
+	        // 예약 가능
 	        return true;
+	        
 	    } finally {
 	        closeAll(rs, ps, conn);
 	    }

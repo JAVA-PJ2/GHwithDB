@@ -10,7 +10,7 @@ public class GHDAOTest {
 		try {
 	        GHDAOImpl dao = GHDAOImpl.getInstance(); // 싱글톤 DAO
 
-	        boolean result = dao.canBook(new Guesthouse("감성하우스", 'E', 5800, 7800, 4), LocalDate.of(2025, 7, 1), 3, 4);
+	        boolean result = dao.canBook(new Guesthouse("감성하우스", 'E', 5800, 7800, 4), LocalDate.of(2025, 6, 27), 3, 4);
 
 	        if (result) {
 	            System.out.println("예약 가능합니다!");
