@@ -479,6 +479,53 @@ public class GHDAOImpl implements GHDAO {
 
 		return result;
 	}
+	
+	@Override
+	public String analzeTendencyByTier(Client c) throws SQLException {
+	    if (c == null || c.getId() == null) {
+	        return "알 수 없음";
+	    }
+
+	    Connection conn = null;
+	    PreparedStatement ps = null;
+	    ResultSet rs = null;
+
+	    char tier = c.getTier(); // tier는 'b', 's', 'g'
+	    String tendency = null;
+
+	    try {
+	        conn = getConnect();
+
+	        String query = 
+	        	    "SELECT " +
+	        	    "CASE c.tier " +
+	        	    "    WHEN 'b' THEN 'bronze' " +
+	        	    "    WHEN 's' THEN 'silver' " +
+	        	    "    WHEN 'g' THEN 'gold' " +
+	        	    "    ELSE 'unknown' " +
+	        	    "END AS tier_name, " +
+	        	    "c.mbti, COUNT(*) AS cnt " +
+	        	    "FROM client c " +
+	        	    "JOIN booking b ON c.client_id = b.client_id " +
+	        	    "WHERE c.tier = ? AND c.mbti IN ('E', 'I') " +
+	        	    "GROUP BY tier_name, c.mbti " +
+	        	    "ORDER BY cnt DESC " +
+	        	    "LIMIT 1";
+
+	        ps = conn.prepareStatement(query);
+	        ps.setString(1, String.valueOf(tier)); // char → String
+
+	        rs = ps.executeQuery();
+
+	        if (rs.next()) {
+	            tendency = rs.getString("mbti");
+	        }
+	    } finally {
+	        closeAll(rs, ps, conn);
+	    }
+
+	    return (tendency == null) ? "알 수 없음" : tendency;
+	}
 
 	@Override
 	public Guesthouse getMostBookedGH(LocalDate checkIn, LocalDate checkOut) {

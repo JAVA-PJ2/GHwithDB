@@ -32,4 +32,5 @@ public interface GHDAO {
 	Client getClientById(String id);
 	ArrayList<Client> getAllClients();
 	ArrayList<Booking> getAllBookings();
+	String analzeTendencyByTier(Client c) throws SQLException;
 }
