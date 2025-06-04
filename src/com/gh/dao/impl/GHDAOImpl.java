@@ -482,7 +482,7 @@ public class GHDAOImpl implements GHDAO {
 	
 	@Override
 	public String analzeTendencyByTier(Client c) throws SQLException {
-	    if (c == null || c.getId() == null) {
+		if (c == null || c.getId() == null) {
 	        return "알 수 없음";
 	    }
 
@@ -502,7 +502,7 @@ public class GHDAOImpl implements GHDAO {
 	        	    "    WHEN 'b' THEN 'bronze' " +
 	        	    "    WHEN 's' THEN 'silver' " +
 	        	    "    WHEN 'g' THEN 'gold' " +
-	        	    "    ELSE 'unknown' " +
+	        	    "    ELSE '알 수 없음' " +
 	        	    "END AS tier_name, " +
 	        	    "c.mbti, COUNT(*) AS cnt " +
 	        	    "FROM client c " +
@@ -513,7 +513,7 @@ public class GHDAOImpl implements GHDAO {
 	        	    "LIMIT 1";
 
 	        ps = conn.prepareStatement(query);
-	        ps.setString(1, String.valueOf(tier)); // char → String
+	        ps.setString(1, tier == '\u0000' ? "\0" : String.valueOf(tier)); // char → String
 
 	        rs = ps.executeQuery();
 
