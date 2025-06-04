@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import com.gh.dao.GHDAO;
+import com.gh.exception.DMLException;
 import com.gh.vo.Booking;
 import com.gh.vo.Client;
 import com.gh.vo.Guesthouse;
@@ -297,7 +298,7 @@ public class GHDAOImpl implements GHDAO {
 			System.out.println("등록된 ID가 아닙니다.");
 		}
 	}
-	
+
 	private boolean checkBookingStatus(String bookingId) throws SQLException {
 		Connection conn = null;
 		PreparedStatement ps = null;
@@ -313,14 +314,13 @@ public class GHDAOImpl implements GHDAO {
 					return true;
 				else
 					return false;
-			}
-			else
+			} else
 				return false;
 		} finally {
 			closeAll(rs, ps, conn);
 		}
 	}
-	
+
 	private String checkId(String bookingId) throws SQLException {
 		Connection conn = null;
 		PreparedStatement ps = null;
@@ -333,12 +333,13 @@ public class GHDAOImpl implements GHDAO {
 			rs = ps.executeQuery();
 			if (rs.next()) {
 				return rs.getString("client_id");
-			} else return null;
+			} else
+				return null;
 		} finally {
 			closeAll(rs, ps, conn);
 		}
 	}
-	
+
 	@Override
 	public void cancleBooking(Client client, String bookingId) throws SQLException {
 		Connection conn = null;
@@ -351,7 +352,7 @@ public class GHDAOImpl implements GHDAO {
 					ps = conn.prepareStatement(query);
 					ps.setString(1, "C");
 					ps.setString(2, bookingId);
-					if(ps.executeUpdate() == 1) {
+					if (ps.executeUpdate() == 1) {
 						System.out.println("예약이 취소되었습니다.");
 					} else {
 						System.out.println("잘못된 입력입니다.");
@@ -359,14 +360,14 @@ public class GHDAOImpl implements GHDAO {
 				} finally {
 					closeAll(ps, conn);
 				}
-			}else {
+			} else {
 				System.out.println("취소할 수 있는 상태의 예약이 아닙니다.");
 			}
-		}else {
+		} else {
 			System.out.println("잘못된 사용자입니다.");
 		}
 	}
-	
+
 	@Override
 	public ArrayList<Guesthouse> searchAvailableGH(String checkIn, String checkout, int peopleCnt, int price,
 			char mbti) {
@@ -613,24 +614,14 @@ public class GHDAOImpl implements GHDAO {
 		try {
 			conn = getConnect();
 
-	        String query = 
-	        	    "SELECT " +
-	        	    "CASE c.tier " +
-	        	    "    WHEN 'b' THEN 'bronze' " +
-	        	    "    WHEN 's' THEN 'silver' " +
-	        	    "    WHEN 'g' THEN 'gold' " +
-	        	    "    ELSE '알 수 없음' " +
-	        	    "END AS tier_name, " +
-	        	    "c.mbti, COUNT(*) AS cnt " +
-	        	    "FROM client c " +
-	        	    "JOIN booking b ON c.client_id = b.client_id " +
-	        	    "WHERE c.tier = ? AND c.mbti IN ('E', 'I') " +
-	        	    "GROUP BY tier_name, c.mbti " +
-	        	    "ORDER BY cnt DESC " +
-	        	    "LIMIT 1";
+			String query = "SELECT " + "CASE c.tier " + "    WHEN 'b' THEN 'bronze' " + "    WHEN 's' THEN 'silver' "
+					+ "    WHEN 'g' THEN 'gold' " + "    ELSE '알 수 없음' " + "END AS tier_name, "
+					+ "c.mbti, COUNT(*) AS cnt " + "FROM client c " + "JOIN booking b ON c.client_id = b.client_id "
+					+ "WHERE c.tier = ? AND c.mbti IN ('E', 'I') " + "GROUP BY tier_name, c.mbti "
+					+ "ORDER BY cnt DESC " + "LIMIT 1";
 
-	        ps = conn.prepareStatement(query);
-	        ps.setString(1, tier == '\u0000' ? "\0" : String.valueOf(tier)); // char → String
+			ps = conn.prepareStatement(query);
+			ps.setString(1, tier == '\u0000' ? "\0" : String.valueOf(tier)); // char → String
 			rs = ps.executeQuery();
 
 			if (rs.next()) {
@@ -651,12 +642,8 @@ public class GHDAOImpl implements GHDAO {
 		ResultSet rs = null;
 		try {
 			conn = getConnect();
-			String query = "SELECT gh_name, COUNT(*) "
-					+ "FROM booking_detail "
-					+ "WHERE booking_date BETWEEN ? AND ? "
-					+ "GROUP BY gh_name "
-					+ "ORDER BY COUNT(*) DESC "
-					+ "LIMIT 1";
+			String query = "SELECT gh_name, COUNT(*) " + "FROM booking_detail " + "WHERE booking_date BETWEEN ? AND ? "
+					+ "GROUP BY gh_name " + "ORDER BY COUNT(*) DESC " + "LIMIT 1";
 			ps = conn.prepareStatement(query);
 			ps.setString(1, checkIn.toString());
 			ps.setString(2, checkOut.toString());
@@ -664,7 +651,7 @@ public class GHDAOImpl implements GHDAO {
 			String ghName = null;
 			if (rs.next()) {
 				ghName = rs.getString("gh_name");
-			}else {
+			} else {
 				System.out.println("등록된 예약이 없습니다.");
 				return null;
 			}
@@ -674,15 +661,12 @@ public class GHDAOImpl implements GHDAO {
 			ps.setString(1, ghName);
 			rs = ps.executeQuery();
 			if (rs.next()) {
-				gh = new Guesthouse(rs.getString("gh_name"),
-								    rs.getString("mbti").charAt(0),
-								    rs.getInt("price_weekday"),
-								    rs.getInt("price_weekend"),
-								    rs.getInt("max_capacity"));
+				gh = new Guesthouse(rs.getString("gh_name"), rs.getString("mbti").charAt(0), rs.getInt("price_weekday"),
+						rs.getInt("price_weekend"), rs.getInt("max_capacity"));
 			} else {
 				System.out.println("잘못된 입력입니다.");
 			}
-		}finally {
+		} finally {
 			closeAll(rs, ps, conn);
 		}
 		return gh;
@@ -695,9 +679,38 @@ public class GHDAOImpl implements GHDAO {
 	}
 
 	@Override
-	public Map<String, Double> calAverageStayByTier() {
-		// TODO Auto-generated method stub
-		return null;
+	public Map<String, Double> calAverageStayByTier() throws DMLException, SQLException {
+		Map<String, Double> result = new LinkedHashMap<>();
+
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+
+		try {
+			conn = getConnect();
+			String query = "SELECT " + "CASE c.tier " + "    WHEN 'b' THEN 'bronze' " + "    WHEN 's' THEN 'silver' "
+					+ "    WHEN 'g' THEN 'gold' " + "    ELSE '알 수 없음' " + "END AS tier_name, "
+					+ "AVG(b.nights) AS avg_nights " + // 숙박 일수 평균
+					"FROM client c " + "JOIN booking b ON c.client_id = b.client_id " + "GROUP BY c.tier "
+					+ "ORDER BY avg_nights DESC";
+			ps = conn.prepareStatement(query);
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+				String tierName = rs.getString("tier_name");
+				double avgNights = rs.getDouble("avg_nights");
+				result.put(tierName, avgNights);
+			}
+
+		} finally {
+			try {
+				closeAll(rs, ps, conn);
+			} catch (SQLException e) {
+				throw new DMLException("등급별 숙박 일 수 평균을 구할 수 없습니다..");
+			}
+		}
+
+		return result;
 	}
 
 	@Override

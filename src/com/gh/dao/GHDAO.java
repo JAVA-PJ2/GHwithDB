@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Map;
 
+import com.gh.exception.DMLException;
 import com.gh.vo.Booking;
 import com.gh.vo.Client;
 import com.gh.vo.Guesthouse;
@@ -29,7 +30,7 @@ public interface GHDAO {
 	Map<String, Integer> getWeeklySales(LocalDate checkIn, LocalDate checkOut) throws SQLException;
 	Guesthouse getMostBookedGH(LocalDate checkIn, LocalDate checkOut) throws SQLException;
 	double calAverageVisitInterval(Client client);
-	Map<String, Double> calAverageStayByTier();
+	Map<String, Double> calAverageStayByTier() throws DMLException, SQLException;
 	double calCancelRate();
 	Client getClientById(String id);
 	ArrayList<Client> getAllClients();
