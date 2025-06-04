@@ -23,8 +23,8 @@ public interface GHDAO {
 	/*
 	 * Manager
 	 */
-	Map<String, Integer> getWeeklyVisitorCount(LocalDate checkIn, LocalDate checkOut);
-	Map<String, Integer> getWeeklySales(LocalDate checkIn, LocalDate checkOut);
+	Map<String, Integer> getWeeklyVisitorCount(LocalDate checkIn, LocalDate checkOut) throws SQLException;
+	Map<String, Integer> getWeeklySales(LocalDate checkIn, LocalDate checkOut) throws SQLException;
 	Guesthouse getMostBookedGH(LocalDate checkIn, LocalDate checkOut);
 	double calAverageVisitInterval(Client client);
 	Map<String, Double> calAverageStayByTier();
