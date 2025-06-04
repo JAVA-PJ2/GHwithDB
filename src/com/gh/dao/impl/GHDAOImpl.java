@@ -50,8 +50,44 @@ public class GHDAOImpl implements GHDAO {
 	}
 	
 	// Tier 계산하는 메소드
-	private void applyTier(Client c) {
+	private void applyTier(Client c) throws SQLException {
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		int count = 0;
 		
+		try {
+			conn = getConnect();
+			String query = "SELECT COUNT(*) AS cnt\r\n"
+					+ "FROM booking b\r\n"
+					+ "JOIN booking_detail bd ON b.gh_name = bd.gh_name AND b.check_in = bd.booking_date\r\n"
+					+ "WHERE b.client_id = ? AND bd.booking_status = 'S';";
+			ps = conn.prepareStatement(query);
+			
+			ps.setString(1, c.getId());
+			
+			rs = ps.executeQuery();
+		
+			
+			if(rs.next()) {
+				count = rs.getInt("cnt");
+			}
+
+			if (count >= 10) {
+			    c.setTier('G');
+			} else if (count >= 5) {
+			    c.setTier('S');
+			} else if (count >= 3) {
+			    c.setTier('B');
+			} else {
+			    c.setTier('U');
+			}
+
+			System.out.println("티어 계산 완료 !");
+			
+		} finally {
+			closeAll(rs, ps, conn);
+		}
 	}
 	
 	@Override
