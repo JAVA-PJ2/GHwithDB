@@ -299,14 +299,43 @@ public class GHDAOImpl implements GHDAO {
 	}
 
 	@Override
-	public ArrayList<Guesthouse> searchAvailableGH(String checkIn, String checkout, int peopleCnt) {
-		// TODO Auto-generated method stub
-		return null;
+	public ArrayList<Guesthouse> searchAvailableGH(LocalDate checkIn, int night, int peopleCnt) throws SQLException {
+		ArrayList<Guesthouse> availableList = new ArrayList<>();
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+
+		try {
+			conn = getConnect();
+
+			String query = "SELECT * FROM guesthouse";
+			ps = conn.prepareStatement(query);
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+				String ghName = rs.getString("gh_name");
+				String mbtiStr = rs.getString("mbti");
+				Character mbti = (mbtiStr != null && !mbtiStr.isEmpty()) ? mbtiStr.charAt(0) : null;
+				int priceWeekday = rs.getInt("price_weekday");
+				int priceWeekend = rs.getInt("price_weekend");
+				int maxCapacity = rs.getInt("max_capacity");
+
+				Guesthouse gh = new Guesthouse(ghName, mbti, priceWeekday, priceWeekend, maxCapacity);
+
+				if (canBook(ghName, checkIn, night, peopleCnt)) {
+					availableList.add(gh);
+				}
+			}
+
+		} finally {
+			closeAll(rs, ps, conn);
+		}
+		
+		return availableList;
 	}
 
 	@Override
-	public ArrayList<Guesthouse> searchAvailableGH(String checkIn, String checkout, int peopleCnt, int price,
-			char mbti) {
+	public ArrayList<Guesthouse> searchAvailableGH(LocalDate checkIn, int night, int peopleCnt, int price, char mbti) throws SQLException {
 		// TODO Auto-generated method stub
 		return null;
 	}
