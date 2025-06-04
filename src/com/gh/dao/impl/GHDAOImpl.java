@@ -119,7 +119,7 @@ public class GHDAOImpl implements GHDAO {
 		return dc;
 	}
 
-	public boolean canBook(Guesthouse gh, LocalDate checkIn, int nights, int people) throws SQLException {
+	private boolean canBook(Guesthouse gh, LocalDate checkIn, int nights, int people) throws SQLException {
 	    // 2025.05.05 ~ 2025.06.29 사이만 예약 가능
 		LocalDate minDate = LocalDate.of(2025, 5, 5);
 	    LocalDate maxDate = LocalDate.of(2025, 6, 29);
@@ -185,11 +185,6 @@ public class GHDAOImpl implements GHDAO {
 	    } finally {
 	        closeAll(rs, ps, conn);
 	    }
-	}
-
-	private boolean canBook(String gh_name, LocalDate checkIn, int nights, int people) {
-		// TODO Auto-generated method stub
-		return false;
 	}
 
 	@Override
@@ -322,23 +317,5 @@ public class GHDAOImpl implements GHDAO {
 	public ArrayList<Booking> getAllBookings() {
 		// TODO Auto-generated method stub
 		return null;
-	}
-
-	@Override
-	public double calcDiscountByTier(Client c) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public boolean canBook(Guesthouse gh, LocalDate checkIn, int nights, int people) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public int getDayBetweenBooking(LocalDate previousCheckIn) {
-		// TODO Auto-generated method stub
-		return 0;
 	}
 }
