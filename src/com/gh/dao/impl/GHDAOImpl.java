@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.UUID;
 
 import com.gh.dao.GHDAO;
 import com.gh.vo.Booking;
@@ -186,6 +187,10 @@ public class GHDAOImpl implements GHDAO {
 	    }
 	}
 
+	private boolean canBook(String gh_name, LocalDate checkIn, int nights, int people) {
+		// TODO Auto-generated method stub
+		return false;
+	}
 
 	@Override
 	private int getDayBetweenBooking(LocalDate previousCheckIn) {
@@ -205,10 +210,52 @@ public class GHDAOImpl implements GHDAO {
 
 	}
 
+	private boolean checkClient(Client client) throws SQLException {
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			conn = getConnect();
+			String query = "SELECT client_id FROM client WHERE client_id=?";
+			ps = conn.prepareStatement(query);
+			ps.setString(1, client.getId());
+			rs = ps.executeQuery();
+			if (rs.next()) {
+				return true;
+			} else return false;
+		} finally {
+			closeAll(rs, ps, conn);
+		}
+	}
+	
 	@Override
-	public void reserveBooking(Client client, Booking booking) {
-		// TODO Auto-generated method stub
-
+	public void reserveBooking(Client client, Booking booking) throws SQLException  {
+		Connection conn = null;
+		PreparedStatement ps = null;
+		if (checkClient(client)) {
+			try {
+				conn = getConnect();
+				String uuid = UUID.randomUUID().toString();
+				if (canBook(booking.getBookingId(), booking.getcheckInDate(), booking.getNights(), booking.getPeopleCnt())) {
+					String query = "INSERT INTO booking VALUES (?, ?, ?, ?, ?, ?, ?)";
+					ps = conn.prepareStatement(query);
+					ps.setString(1, uuid);
+					ps.setString(2, client.getId());
+					ps.setString(3, booking.getGh_name());
+					ps.setInt(4, booking.getPeopleCnt());
+					ps.setString(5, booking.getcheckInDate().toString());
+					ps.setInt(6, booking.getNights());
+					ps.setInt(7, booking.getTotalPrice());
+					System.out.println(ps.executeUpdate() + "개의 예약이 완료되었습니다.");
+				}else {
+					System.out.println("예약할 수 없습니다.");
+				}
+			} finally {
+				closeAll(ps, conn);
+			}
+		}else {
+			System.out.println("등록된 ID가 아닙니다.");
+		}
 	}
 
 	@Override
@@ -275,5 +322,23 @@ public class GHDAOImpl implements GHDAO {
 	public ArrayList<Booking> getAllBookings() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public double calcDiscountByTier(Client c) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public boolean canBook(Guesthouse gh, LocalDate checkIn, int nights, int people) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public int getDayBetweenBooking(LocalDate previousCheckIn) {
+		// TODO Auto-generated method stub
+		return 0;
 	}
 }

@@ -1,5 +1,6 @@
 package com.gh.dao;
 
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Map;
@@ -15,7 +16,7 @@ public interface GHDAO {
 	 */
 	void login(String id, String password);
 	void logout();
-	void reserveBooking(Client client, Booking booking);
+	void reserveBooking(Client client, Booking booking) throws SQLException;
 	ArrayList<Guesthouse> recommendGH(int price, char mbti);
 	void printMyInfo(Client c);
 	
