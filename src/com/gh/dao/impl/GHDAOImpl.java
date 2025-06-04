@@ -119,7 +119,7 @@ public class GHDAOImpl implements GHDAO {
 		return dc;
 	}
 
-	private boolean canBook(Guesthouse gh, LocalDate checkIn, int nights, int people) throws SQLException {
+	private boolean canBook(String ghName, LocalDate checkIn, int nights, int people) throws SQLException {
 	    // 2025.05.05 ~ 2025.06.29 사이만 예약 가능
 		LocalDate minDate = LocalDate.of(2025, 5, 5);
 	    LocalDate maxDate = LocalDate.of(2025, 6, 29);
@@ -154,11 +154,11 @@ public class GHDAOImpl implements GHDAO {
 	            "GROUP BY t.booking_date";
 
 	        ps = conn.prepareStatement(query);
-	        ps.setString(1, gh.getName());
+	        ps.setString(1, ghName);
 	        ps.setDate(2, Date.valueOf(checkIn));
 	        ps.setDate(3, Date.valueOf(checkIn));
 	        ps.setInt(4, nights);
-	        ps.setString(5, gh.getName());
+	        ps.setString(5, ghName);
 
 	        rs = ps.executeQuery();
 
@@ -176,7 +176,19 @@ public class GHDAOImpl implements GHDAO {
 	        
 	        // 그 날 이 게하에 예약이 아예 없다면 로직 처리
 	        if (empty) {
-	            return people <= gh.getMaxCapacity();
+	        	String findQuery = "SELECT max_capacity FROM guesthouse WHERE gh_name=?";
+	        	ps = conn.prepareStatement(findQuery);
+	        	ps.setString(1, ghName);
+	        	rs = ps.executeQuery();
+	        	
+	        	if(rs.next()) {
+	        		int maxCapacity = rs.getInt("max_capacity");
+	        		return people <= maxCapacity;
+	        	} else {
+	        		// 게스트하우스 이름이 존재하지 않을 경우
+	        		System.out.println("[" + ghName + " 은/는 존재하지 않는 게스트하우스입니다]");
+	        		return false;
+	        	}
 	        }
 
 	        // 예약 가능
@@ -187,9 +199,17 @@ public class GHDAOImpl implements GHDAO {
 	    }
 	}
 
-	@Override
-	private int getDayBetweenBooking(LocalDate previousCheckIn) {
-
+	private int getDayBetweenBooking(LocalDate previousCheckIn) throws SQLException {
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		
+		try {
+			
+		} finally {
+			closeAll(rs, ps, conn);
+		}
+		
 		return 0;
 	}
 
