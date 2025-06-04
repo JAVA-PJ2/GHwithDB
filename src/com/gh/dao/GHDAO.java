@@ -13,8 +13,6 @@ public interface GHDAO {
 	/*
 	 * Client
 	 */
-	boolean canBook(Guesthouse gh, LocalDate checkIn, int nights, int people);
-	int getDayBetweenBooking(LocalDate previousCheckIn);
 	void login(String id, String password);
 	void logout();
 	void reserveBooking(Client client, Booking booking);
