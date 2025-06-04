@@ -7,6 +7,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.UUID;
@@ -199,19 +200,38 @@ public class GHDAOImpl implements GHDAO {
 	    }
 	}
 
-	private int getDayBetweenBooking(LocalDate previousCheckIn) throws SQLException {
+	public int getDayBetweenBooking(String clientId) throws SQLException {
 		Connection conn = null;
 		PreparedStatement ps = null;
 		ResultSet rs = null;
+		Date beforeDate = null;
 		
 		try {
+			conn = getConnect();
+			String query = "SELECT max(b.check_in) AS bdate FROM booking b "
+					+ "JOIN booking_detail bd ON b.booking_id = bd.booking_id"
+					+ "WHERE client_id = ? AND bd.booking_status = 'S'";
+			ps = conn.prepareStatement(query);
+			ps.setString(1, clientId);
+			rs = ps.executeQuery();
 			
-		} finally {
+			if(rs.next()) 
+				 beforeDate = rs.getDate("bdate");
+				
+		}finally {
 			closeAll(rs, ps, conn);
 		}
 		
-		return 0;
+		if(beforeDate == null) {
+			System.out.println("이전 방문한 기록이 없습니다.");
+			return -1;
+		}
+		
+		LocalDate lastCheckIn = beforeDate.toLocalDate();
+		LocalDate today = LocalDate.now();
+		return (int) ChronoUnit.DAYS.between(lastCheckIn, today);
 	}
+	// 사용 방법 : 0보다 작으면(-1) 이전에 예약한 기록이 없습니다, 크면 getDayBetweenBooking()일만에 예약하셧습니다 하면 됩니다
 
 	@Override
 	public void login(String id, String password) {
