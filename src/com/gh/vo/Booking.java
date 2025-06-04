@@ -8,14 +8,14 @@ public class Booking {
 	private LocalDate checkInDate; // 칼럼에는 check_in
 	private int nights;
 	private int totalPrice; // 칼럼에는 total_price
-	private String gh_name;
+	private String ghName;
 	
 	public Booking(){}
 	
-	public Booking(String bookingId, String gh_name, int peopleCnt, LocalDate checkInDate, int nights, int totalPrice) {
+	public Booking(String bookingId, String ghName, int peopleCnt, LocalDate checkInDate, int nights, int totalPrice) {
 		super();
 		this.bookingId = bookingId;
-		this.gh_name = gh_name;
+		this.ghName = ghName;
 		this.peopleCnt = peopleCnt;
 		this.checkInDate = checkInDate;
 		this.nights = nights;
@@ -30,12 +30,12 @@ public class Booking {
 		this.bookingId = bookingId;
 	}
 
-	public String getGh_name() {
-		return gh_name;
+	public String getGhName() {
+		return ghName;
 	}
 
-	public void setGh_name(String gh_name) {
-		this.gh_name = gh_name;
+	public void setGhName(String ghName) {
+		this.ghName = ghName;
 	}
 
 	public int getPeopleCnt() {
@@ -46,11 +46,11 @@ public class Booking {
 		this.peopleCnt = peopleCnt;
 	}
 
-	public LocalDate getcheckInDate() {
+	public LocalDate getCheckInDate() {
 		return checkInDate;
 	}
 
-	public void setcheckInDate(LocalDate checkInDate) {
+	public void setCheckInDate(LocalDate checkInDate) {
 		this.checkInDate = checkInDate;
 	}
 
