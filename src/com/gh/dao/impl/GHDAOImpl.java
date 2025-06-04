@@ -293,7 +293,14 @@ public class GHDAOImpl implements GHDAO {
 	}
 
 	@Override
-	public ArrayList<Guesthouse> recommendGH(int price, char mbti) {
+	public ArrayList<Guesthouse> searchAvailableGH(String checkIn, String checkout, int peopleCnt) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public ArrayList<Guesthouse> searchAvailableGH(String checkIn, String checkout, int peopleCnt, int price,
+			char mbti) {
 		// TODO Auto-generated method stub
 		return null;
 	}
