@@ -48,21 +48,35 @@ public class GHDAOImpl implements GHDAO {
 		if(rs != null) rs.close();
 		closeAll(ps, conn);
 	}
-
+	
+	// Tier 계산하는 메소드
+	private void applyTier(Client c) {
+		
+	}
+	
 	@Override
-	public double calcDiscountByTier(Client c) {
-		// TODO Auto-generated method stub
+	private double calcDiscountByTier(Client c) {
+		if(c.getTier() == null) {
+			applyTier(c);
+		}
+		
+		return 0;
+	}
+	
+	@Override
+	private double calcDiscountByTier(Client c) {
+
 		return 0;
 	}
 
 	@Override
-	public boolean canBook(Guesthouse gh, LocalDate checkIn, int nights, int people) {
+	private boolean canBook(Guesthouse gh, LocalDate checkIn, int nights, int people) {
 		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
-	public int getDayBetweenBooking(LocalDate previousCheckIn) {
+	private int getDayBetweenBooking(LocalDate previousCheckIn) {
 		// TODO Auto-generated method stub
 		return 0;
 	}

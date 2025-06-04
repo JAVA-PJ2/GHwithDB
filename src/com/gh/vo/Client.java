@@ -7,12 +7,12 @@ public class Client {
 	private String password; // 칼럼에는 client_password
 	private String name; // 칼럼에는 client_name
 	private char mbti;
-	private char tier;
+	private Character tier;
 	private ArrayList<Booking> bookings;
 	
 	public Client() {}
 
-	public Client(String id, String password, String name, char mbti, char tier, ArrayList<Booking> bookings) {
+	public Client(String id, String password, String name, char mbti, Character tier, ArrayList<Booking> bookings) {
 		super();
 		this.id = id;
 		this.password = password;
@@ -54,11 +54,11 @@ public class Client {
 		this.mbti = mbti;
 	}
 
-	public char getTier() {
+	public Character getTier() {
 		return tier;
 	}
 
-	public void setTier(char tier) {
+	public void setTier(Character tier) {
 		this.tier = tier;
 	}
 
