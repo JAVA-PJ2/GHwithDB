@@ -4,6 +4,7 @@ import java.time.LocalDate;
 
 public class Booking {
 	private String bookingId; // 칼럼에는 booking_id
+	private String clientId;
 	private int peopleCnt; // 칼럼에는 people
 	private LocalDate checkInDate; // 칼럼에는 check_in
 	private int nights;
@@ -12,9 +13,10 @@ public class Booking {
 	
 	public Booking(){}
 	
-	public Booking(String bookingId, String ghName, int peopleCnt, LocalDate checkInDate, int nights, int totalPrice) {
+	public Booking(String bookingId,String clientId, String ghName, int peopleCnt, LocalDate checkInDate, int nights, int totalPrice) {
 		super();
 		this.bookingId = bookingId;
+		this.clientId = clientId;
 		this.ghName = ghName;
 		this.peopleCnt = peopleCnt;
 		this.checkInDate = checkInDate;
@@ -22,6 +24,14 @@ public class Booking {
 		this.totalPrice = totalPrice;
 	}
 	
+	public String getClientId() {
+		return clientId;
+	}
+
+	public void setClientId(String clientId) {
+		this.clientId = clientId;
+	}
+
 	public String getBookingId() {
 		return bookingId;
 	}
