@@ -209,7 +209,7 @@ public class GHDAOImpl implements GHDAO {
 		try {
 			conn = getConnect();
 			String query = "SELECT max(b.check_in) AS bdate FROM booking b "
-					+ "JOIN booking_detail bd ON b.booking_id = bd.booking_id"
+					+ "JOIN booking_detail bd ON b.booking_id = bd.booking_id "
 					+ "WHERE client_id = ? AND bd.booking_status = 'S'";
 			ps = conn.prepareStatement(query);
 			ps.setString(1, clientId);
@@ -223,7 +223,6 @@ public class GHDAOImpl implements GHDAO {
 		}
 		
 		if(beforeDate == null) {
-			System.out.println("이전 방문한 기록이 없습니다.");
 			return -1;
 		}
 		
@@ -231,7 +230,7 @@ public class GHDAOImpl implements GHDAO {
 		LocalDate today = LocalDate.now();
 		return (int) ChronoUnit.DAYS.between(lastCheckIn, today);
 	}
-	// 사용 방법 : 0보다 작으면(-1) 이전에 예약한 기록이 없습니다, 크면 getDayBetweenBooking()일만에 예약하셧습니다 하면 됩니다
+	// 사용 방법 : 0보다 작으면(-1) 이전에 방문한 기록이 없습니다, 크면 getDayBetweenBooking()일만에 예약하셧습니다 하면 됩니다
 
 	@Override
 	public void login(String id, String password) {
