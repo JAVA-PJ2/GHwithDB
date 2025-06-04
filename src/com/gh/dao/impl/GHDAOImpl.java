@@ -200,7 +200,7 @@ public class GHDAOImpl implements GHDAO {
 
 	}
 
-	private boolean checkClient(Client client) throws SQLException {
+	private boolean checkId(Client client) throws SQLException {
 		Connection conn = null;
 		PreparedStatement ps = null;
 		ResultSet rs = null;
@@ -220,34 +220,74 @@ public class GHDAOImpl implements GHDAO {
 	}
 
 	@Override
-	public void reserveBooking(Client client, Booking booking) throws SQLException {
+	public void reserveBooking(Client client, Booking booking) throws SQLException  {
 		Connection conn = null;
 		PreparedStatement ps = null;
-		if (checkClient(client)) {
+		if (checkId(client)) {
 			try {
-				conn = getConnect();
 				String uuid = UUID.randomUUID().toString();
-				if (canBook(booking.getBookingId(), booking.getcheckInDate(), booking.getNights(),
-						booking.getPeopleCnt())) {
+				if (canBook(booking.getBookingId(), booking.getcheckInDate(), booking.getNights(), booking.getPeopleCnt())) {
+					conn = getConnect();
 					String query = "INSERT INTO booking VALUES (?, ?, ?, ?, ?, ?, ?)";
 					ps = conn.prepareStatement(query);
 					ps.setString(1, uuid);
 					ps.setString(2, client.getId());
-					ps.setString(3, booking.getGh_name());
+					ps.setString(3, booking.getGhName());
 					ps.setInt(4, booking.getPeopleCnt());
 					ps.setString(5, booking.getcheckInDate().toString());
 					ps.setInt(6, booking.getNights());
 					ps.setInt(7, booking.getTotalPrice());
-					System.out.println(ps.executeUpdate() + "개의 예약이 완료되었습니다.");
-				} else {
+					ps.executeUpdate();
+					conn = getConnect();
+					query = "INSERT INTO booking_detail (gh_name, booking_date, booking_status, booking_id) VALUES (?, ?, ?, ?)";
+					ps = conn.prepareStatement(query);
+					ps.setString(1, booking.getGhName());
+					ps.setString(2, booking.getcheckInDate().toString());
+					ps.setString(3, "R");
+					ps.setString(4, uuid);
+					System.out.println(ps.executeUpdate() + "개 예약 완료되었습니다.");
+				}else {
 					System.out.println("예약할 수 없습니다.");
 				}
 			} finally {
 				closeAll(ps, conn);
 			}
-		} else {
+		}else {
 			System.out.println("등록된 ID가 아닙니다.");
 		}
+	}
+
+	@Override
+	public void updateBooking(Client client, Booking booking) throws SQLException {
+		Connection conn = null;
+		PreparedStatement ps = null;
+		if (checkId(client)) {
+			try {
+				if (canBook(booking.getGhName(), booking.getcheckInDate(), booking.getNights(), booking.getPeopleCnt())) {
+					conn = getConnect();
+					String query = "UPDATE booking SET check_in=?, people=?, nights=? WHERE booking_id=? AND client_id=?";
+					ps = conn.prepareStatement(query);
+					ps.setString(1, booking.getcheckInDate().toString());
+					ps.setInt(2, booking.getPeopleCnt());
+					ps.setInt(3, booking.getNights());
+					ps.setString(4, booking.getBookingId());
+					ps.setString(5, client.getId());
+					if (ps.executeUpdate() == 1) {
+						conn = getConnect();
+						query = "UPDATE booking_detail SET booking_date=?";
+						ps = conn.prepareStatement(query);
+						ps.setString(1, booking.getcheckInDate().toString());
+						System.out.println(ps.executeUpdate() + "개 예약이 변경되었습니다.");
+					} else 
+						System.out.println("변경하실 수 없습니다.");
+				} else {
+					System.out.println("변경할 수 없는 날짜입니다.");
+				}
+			} finally {
+				closeAll(ps, conn);
+			}
+		}else
+			System.out.println("없는 사용자입니다.");
 	}
 
 	@Override
