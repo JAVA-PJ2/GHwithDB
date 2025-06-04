@@ -644,9 +644,48 @@ public class GHDAOImpl implements GHDAO {
 	}
 
 	@Override
-	public Guesthouse getMostBookedGH(LocalDate checkIn, LocalDate checkOut) {
-		// TODO Auto-generated method stub
-		return null;
+	public Guesthouse getMostBookedGH(LocalDate checkIn, LocalDate checkOut) throws SQLException {
+		Guesthouse gh = null;
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			conn = getConnect();
+			String query = "SELECT gh_name, COUNT(*) "
+					+ "FROM booking_detail "
+					+ "WHERE booking_date BETWEEN ? AND ? "
+					+ "GROUP BY gh_name "
+					+ "ORDER BY COUNT(*) DESC "
+					+ "LIMIT 1";
+			ps = conn.prepareStatement(query);
+			ps.setString(1, checkIn.toString());
+			ps.setString(2, checkOut.toString());
+			rs = ps.executeQuery();
+			String ghName = null;
+			if (rs.next()) {
+				ghName = rs.getString("gh_name");
+			}else {
+				System.out.println("등록된 예약이 없습니다.");
+				return null;
+			}
+			conn = getConnect();
+			query = "SELECT * FROM guesthouse WHERE gh_name = ?";
+			ps = conn.prepareStatement(query);
+			ps.setString(1, ghName);
+			rs = ps.executeQuery();
+			if (rs.next()) {
+				gh = new Guesthouse(rs.getString("gh_name"),
+								    rs.getString("mbti").charAt(0),
+								    rs.getInt("price_weekday"),
+								    rs.getInt("price_weekend"),
+								    rs.getInt("max_capacity"));
+			} else {
+				System.out.println("잘못된 입력입니다.");
+			}
+		}finally {
+			closeAll(rs, ps, conn);
+		}
+		return gh;
 	}
 
 	@Override
