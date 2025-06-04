@@ -33,7 +33,8 @@ public interface GHDAO {
 	Map<String, Double> calAverageStayByTier() throws DMLException, SQLException;
 	double calCancelRate();
 	Client getClientById(String id);
-	ArrayList<Client> getAllClients();
+	ArrayList<Client> getAllClients() throws SQLException;
+	ArrayList<Booking> getBookings(String clientId) throws SQLException;
 	ArrayList<Booking> getAllBookings();
 	String analzeTendencyByTier(Client c) throws SQLException;
 	ArrayList<Guesthouse> recommendGH(int price, char mbti);
