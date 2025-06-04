@@ -2,17 +2,19 @@ package com.gh.vo;
 
 public class Booking {
 	private String bookingId; // 칼럼에는 booking_id
-	private int people; // 칼럼에는 people
+	private int peopleCnt; // 칼럼에는 people
 	private String checkInDate; // 칼럼에는 check_in
 	private int nights;
 	private int totalPrice; // 칼럼에는 total_price
+	private String gh_name;
 	
 	public Booking(){}
 	
-	public Booking(String bookingId, int people, String checkInDate, int nights, int totalPrice) {
+	public Booking(String bookingId, String gh_name, int peopleCnt, String checkInDate, int nights, int totalPrice) {
 		super();
 		this.bookingId = bookingId;
-		this.people = people;
+		this.gh_name = gh_name;
+		this.peopleCnt = peopleCnt;
 		this.checkInDate = checkInDate;
 		this.nights = nights;
 		this.totalPrice = totalPrice;
@@ -26,12 +28,20 @@ public class Booking {
 		this.bookingId = bookingId;
 	}
 
-	public int getpeople() {
-		return people;
+	public String getGh_name() {
+		return gh_name;
 	}
 
-	public void setpeople(int people) {
-		this.people = people;
+	public void setGh_name(String gh_name) {
+		this.gh_name = gh_name;
+	}
+
+	public int getPeopleCnt() {
+		return peopleCnt;
+	}
+
+	public void setPeopleCnt(int peopleCnt) {
+		this.peopleCnt = peopleCnt;
 	}
 
 	public String getcheckInDate() {
@@ -60,7 +70,7 @@ public class Booking {
 
 	@Override
 	public String toString() {
-		return "Booking [bookingId=" + bookingId + ", people=" + people + ", checkInDate=" + checkInDate + ", nights=" + nights
+		return "Booking [bookingId=" + bookingId + ", peopleCnt=" + peopleCnt + ", checkInDate=" + checkInDate + ", nights=" + nights
 				+ ", bookingStatus=" + ", totalPrice=" + totalPrice + "]";
 	}
 	
