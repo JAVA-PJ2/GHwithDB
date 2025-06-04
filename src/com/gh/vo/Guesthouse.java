@@ -2,14 +2,14 @@ package com.gh.vo;
 
 public class Guesthouse {
 	private String name; // 칼럼에는 gh_name
-	private char mbti;
+	private Character mbti;
 	private int priceWeekday; // 칼럼에는 price_weekday
 	private int priceWeekend; // 칼럼에는 price_weekend
 	private int maxCapacity; // 칼럼에는 max_capacity
 	
 	public Guesthouse(){}
 	
-	public Guesthouse(String name, char mbti, int priceWeekday, int priceWeekend, int maxCapacity) {
+	public Guesthouse(String name, Character mbti, int priceWeekday, int priceWeekend, int maxCapacity) {
 		super();
 		this.name = name;
 		this.mbti = mbti;
@@ -26,11 +26,11 @@ public class Guesthouse {
 		this.name = name;
 	}
 
-	public char getMbti() {
+	public Character getMbti() {
 		return mbti;
 	}
 
-	public void setMbti(char mbti) {
+	public void setMbti(Character mbti) {
 		this.mbti = mbti;
 	}
 

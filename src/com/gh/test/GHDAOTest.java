@@ -8,33 +8,33 @@ import com.gh.vo.Guesthouse;
 
 public class GHDAOTest {
 	public static void main(String[] args) {
-		  try {
-	            GHDAOImpl dao = GHDAOImpl.getInstance();
+		try {
+            GHDAOImpl dao = GHDAOImpl.getInstance();
 
-	            // 테스트용 파라미터
-	            LocalDate checkIn = LocalDate.of(2025, 6, 1);
-	            int nights = 2;
-	            int people = 3;
+            LocalDate checkIn = LocalDate.of(2025, 6, 5);
+            int nights = 2;
+            int peopleCnt = 2;
+            int maxPrice = 8000;
+            char clientMbti = 'E'; // 또는 'I'
 
-	            // 예약 가능한 게스트하우스 리스트 조회
-	            ArrayList<Guesthouse> result = dao.searchAvailableGH(checkIn, nights, people);
+            ArrayList<Guesthouse> list = dao.searchAvailableGH(checkIn, nights, peopleCnt, maxPrice, clientMbti);
 
-	            // 결과 출력
-	            if (result.isEmpty()) {
-	                System.out.println("예약 가능한 게스트하우스가 없습니다.");
-	            } else {
-	                System.out.println("[예약 가능한 게스트하우스 목록]");
-	                for (Guesthouse gh : result) {
-	                    System.out.println("이름: " + gh.getName() +
-	                                       ", MBTI: " + gh.getMbti() +
-	                                       ", 주중가격: " + gh.getPriceWeekday() +
-	                                       ", 주말가격: " + gh.getPriceWeekend() +
-	                                       ", 최대수용인원: " + gh.getMaxCapacity());
-	                }
-	            }
+            System.out.println("[예약 가능한 게스트하우스 목록 - 필터 적용]");
+            for (Guesthouse gh : list) {
+                System.out.printf("이름: %s, MBTI: %s, 주중가격: %,d, 주말가격: %,d, 최대수용인원: %d%n",
+                        gh.getName(),
+                        gh.getMbti() != null ? gh.getMbti() : "없음",
+                        gh.getPriceWeekday(),
+                        gh.getPriceWeekend(),
+                        gh.getMaxCapacity());
+            }
 
-	        } catch (Exception e) {
-	            e.printStackTrace();
-	        }
+            if (list.isEmpty()) {
+                System.out.println("조건에 맞는 예약 가능한 게스트하우스가 없습니다.");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 	}
 }
