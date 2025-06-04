@@ -297,7 +297,76 @@ public class GHDAOImpl implements GHDAO {
 			System.out.println("등록된 ID가 아닙니다.");
 		}
 	}
-
+	
+	private boolean checkBookingStatus(String bookingId) throws SQLException {
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			conn = getConnect();
+			String query = "SELECT booking_status FROM booking_detail WHERE booking_id=?";
+			ps = conn.prepareStatement(query);
+			ps.setString(1, bookingId);
+			rs = ps.executeQuery();
+			if (rs.next()) {
+				if (rs.getString("booking_status").equals("R"))
+					return true;
+				else
+					return false;
+			}
+			else
+				return false;
+		} finally {
+			closeAll(rs, ps, conn);
+		}
+	}
+	
+	private String checkId(String bookingId) throws SQLException {
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			conn = getConnect();
+			String query = "SELECT client_id FROM booking WHERE booking_id=?";
+			ps = conn.prepareStatement(query);
+			ps.setString(1, bookingId);
+			rs = ps.executeQuery();
+			if (rs.next()) {
+				return rs.getString("client_id");
+			} else return null;
+		} finally {
+			closeAll(rs, ps, conn);
+		}
+	}
+	
+	@Override
+	public void cancleBooking(Client client, String bookingId) throws SQLException {
+		Connection conn = null;
+		PreparedStatement ps = null;
+		if (client.getId().equals(checkId(bookingId))) {
+			if (checkBookingStatus(bookingId)) {
+				try {
+					conn = getConnect();
+					String query = "UPDATE booking_detail SET booking_status=? WHERE booking_id=?";
+					ps = conn.prepareStatement(query);
+					ps.setString(1, "C");
+					ps.setString(2, bookingId);
+					if(ps.executeUpdate() == 1) {
+						System.out.println("예약이 취소되었습니다.");
+					} else {
+						System.out.println("잘못된 입력입니다.");
+					}
+				} finally {
+					closeAll(ps, conn);
+				}
+			}else {
+				System.out.println("취소할 수 있는 상태의 예약이 아닙니다.");
+			}
+		}else {
+			System.out.println("잘못된 사용자입니다.");
+		}
+	}
+	
 	@Override
 	public ArrayList<Guesthouse> searchAvailableGH(String checkIn, String checkout, int peopleCnt) {
 		// TODO Auto-generated method stub

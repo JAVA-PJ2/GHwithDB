@@ -20,8 +20,8 @@ public interface GHDAO {
 	ArrayList<Guesthouse> searchAvailableGH(String checkIn, String checkout, int peopleCnt);
 	ArrayList<Guesthouse> searchAvailableGH(String checkIn, String checkout, int peopleCnt, int price, char mbti);
 	void printMyInfo(Client c);
-	
-	
+	void cancleBooking(Client client, String bookingId) throws SQLException;
+	void updateBooking(Client client, Booking booking) throws SQLException;
 	/*
 	 * Manager
 	 */
