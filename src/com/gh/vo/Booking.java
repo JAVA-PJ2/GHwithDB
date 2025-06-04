@@ -1,16 +1,18 @@
 package com.gh.vo;
 
+import java.time.LocalDate;
+
 public class Booking {
 	private String bookingId; // 칼럼에는 booking_id
 	private int peopleCnt; // 칼럼에는 people
-	private String checkInDate; // 칼럼에는 check_in
+	private LocalDate checkInDate; // 칼럼에는 check_in
 	private int nights;
 	private int totalPrice; // 칼럼에는 total_price
 	private String gh_name;
 	
 	public Booking(){}
 	
-	public Booking(String bookingId, String gh_name, int peopleCnt, String checkInDate, int nights, int totalPrice) {
+	public Booking(String bookingId, String gh_name, int peopleCnt, LocalDate checkInDate, int nights, int totalPrice) {
 		super();
 		this.bookingId = bookingId;
 		this.gh_name = gh_name;
@@ -44,11 +46,11 @@ public class Booking {
 		this.peopleCnt = peopleCnt;
 	}
 
-	public String getcheckInDate() {
+	public LocalDate getcheckInDate() {
 		return checkInDate;
 	}
 
-	public void setcheckInDate(String checkInDate) {
+	public void setcheckInDate(LocalDate checkInDate) {
 		this.checkInDate = checkInDate;
 	}
 
