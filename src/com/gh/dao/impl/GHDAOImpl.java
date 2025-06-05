@@ -912,7 +912,7 @@ public class GHDAOImpl implements GHDAO {
 				}
 			}
 		} catch (SQLException e) {
-			e.printStackTrace();
+			e.getMessage();
 		} finally {
 			closeAll(rs, ps, conn);
 		}
