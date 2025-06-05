@@ -658,38 +658,65 @@ public class GHDAOImpl implements GHDAO {
 	// 주별 매출 집계
 	@Override
 	public Map<String, Integer> getWeeklySales(LocalDate checkIn, LocalDate checkOut) throws SQLException {
-		Map<String, Integer> result = new LinkedHashMap<>();
+	    Map<String, Integer> result = new LinkedHashMap<>();
 
-		Connection conn = null;
-		PreparedStatement ps = null;
-		ResultSet rs = null;
+	    Connection conn = null;
+	    PreparedStatement ps = null;
+	    ResultSet rs = null;
 
-		try {
-			conn = getConnect();
-			String query = "SELECT YEAR(check_in) AS year, MONTH(check_in) AS month, WEEK(check_in, 1) AS week_num, "
-					+ "SUM(price) AS total_sales " + "FROM booking " + "WHERE check_in BETWEEN ? AND ? "
-					+ "GROUP BY year, month, week_num " + "ORDER BY year, month, week_num";
+	    try {
+	        conn = getConnect();
+	        
+	        // 1. gh 테이블에서 요금 정보 가져오기
+	        String ghquery = "SELECT gh_name, price_weekday, price_weekend FROM gh";
+	        ps = conn.prepareStatement(ghquery);
+	        rs = ps.executeQuery();
+	        
+	        Map<String, Integer> priceMap = new HashMap<>();
+	        while (rs.next()) {
+	            String ghName = rs.getString("gh_name");
+	            int price = rs.getInt("price_weekday") + rs.getInt("price_weekend");
+	            priceMap.put(ghName, price);
+	        }
+	        closeAll(rs, ps, null);
 
-			ps = conn.prepareStatement(query);
-			ps.setDate(1, java.sql.Date.valueOf(checkIn));
-			ps.setDate(2, java.sql.Date.valueOf(checkOut));
-			rs = ps.executeQuery();
+	        // 2. booking에서 주별, gh_name별 예약 인원 합계 계산
+	        String query =
+	            "SELECT " +
+	            " YEAR(check_in) AS year, " +
+	            " MONTH(check_in) AS month, " +
+	            " WEEK(check_in, 1) AS week_num, " +
+	            " gh_name, " +
+	            " SUM(people) AS total_people " +
+	            "FROM booking " + 
+	            "WHERE check_in BETWEEN ? AND ? " +
+	            "GROUP BY year, month, week_num, gh_name " +
+	            "ORDER BY year, month, week_num";
 
-			while (rs.next()) {
-				int year = rs.getInt("year");
-				int month = rs.getInt("month");
-				int week = rs.getInt("week_num");
-				int totalSales = rs.getInt("total_sales"); // 주별 총 매출
+	        ps = conn.prepareStatement(query);
+	        ps.setDate(1, java.sql.Date.valueOf(checkIn));
+	        ps.setDate(2, java.sql.Date.valueOf(checkOut));
+	        rs = ps.executeQuery();
 
-				String key = String.format("%d-%02d 주차 %d주차", year, month, week);
-				result.put(key, totalSales);
-			}
+	        while (rs.next()) {
+	            int year = rs.getInt("year");
+	            int month = rs.getInt("month");
+	            int week = rs.getInt("week_num");
+	            String ghName = rs.getString("gh_name");
+	            int people = rs.getInt("total_people");
+	            
+	            int price = priceMap.getOrDefault(ghName, 0);
+	            int sale = people * price;
+	            
+	            String key = String.format("%d년 %02d월 %d주차", year, month, week);
+	            result.put(key, result.getOrDefault(key, 0) + sale);
+	        }
 
-		} finally {
-			closeAll(rs, ps, conn);
-		}
+	    } finally {
+	        closeAll(rs, ps, conn);
+	    }
 
-		return result;
+	    return result;
 	}
 
 	@Override
