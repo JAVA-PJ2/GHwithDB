@@ -169,22 +169,28 @@ public class GHDAOTest {
 
 					switch (clientChoice) {
 					case "1":
-						Booking b = new Booking("1234", c.getId(), "힐링하우스", 1, LocalDate.of(2025, 06, 20), 4, 4);
+						System.out.println("예약하기 호출됨");
+						Booking booking = new Booking(c.getId(), "힐링하우스", 2, LocalDate.of(2025, 06, 5), 3);
+						
 						try {
-							dao.reserveBooking(c, b);
+							dao.reserveBooking(c, booking);
 						} catch (SQLException e) {
-							// TODO Auto-generated catch block
 							System.out.println(e.getMessage());
 						}
-						System.out.println("예약하기 호출됨");
-//						Booking booking = new Booking("1234", c.getId(), "힐링하우스", 1, 4, LocalDate.of(2025, 06, 20));
-//						dao.reserveBooking(c, booking);
 						break;
 					case "2":
 						System.out.println("예약 수정 호출됨");
+						Booking b = new Booking("7bc43af7-8c8a-47a7-9aa0-7b0b7ce7e06e", c.getId(), "힐링하우스", 1, LocalDate.of(2025, 06, 5), 3, 17000);
+						try {
+							dao.updateBooking(c, b);
+						} catch (SQLException e) {
+							System.out.println(e.getMessage());
+						}
 						break;
 					case "3":
 						System.out.println("예약 취소 호출됨");
+						
+						
 						break;
 					case "4":
 						System.out.println("실시간 전체 조회 시작 (q 입력 시 종료)");

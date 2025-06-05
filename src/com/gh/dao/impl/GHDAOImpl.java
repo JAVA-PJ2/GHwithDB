@@ -184,11 +184,7 @@ public class GHDAOImpl implements GHDAO {
 				if (rs.next()) {
 					int maxCapacity = rs.getInt("max_capacity");
 					return people <= maxCapacity;
-				} else {
-					// 게스트하우스 이름이 존재하지 않을 경우
-					System.out.println("[" + ghName + " 은/는 존재하지 않는 게스트하우스입니다]");
-					return false;
-				}
+				} 
 			}
 
 			// 예약 가능
@@ -310,7 +306,7 @@ public class GHDAOImpl implements GHDAO {
 	    return list;
 	}
 
-	
+	@Override
 	public Client login(String id, String password) throws SQLException {
 	    Connection conn = null;
 	    PreparedStatement ps = null;
@@ -422,6 +418,7 @@ public class GHDAOImpl implements GHDAO {
 		Connection conn = null;
 		PreparedStatement ps = null;
 		try {
+			calcDiscountByTier(client);
 			String uuid = UUID.randomUUID().toString();
 			booking.setBookingId(uuid);
 			if (canBook(booking.getBookingId(), booking.getCheckInDate(), booking.getNights(),
@@ -434,7 +431,7 @@ public class GHDAOImpl implements GHDAO {
 				int totalPrice = calcTotalPrice(booking.getCheckInDate(), booking.getNights(),
 												gh.getPriceWeekday(), gh.getPriceWeekend());
 				conn = getConnect();
-				String query = "INSERT INTO booking VALUES (?, ?, ?, ?, ?, ?, ?)";
+				String query = "INSERT INTO booking (booking_id, client_id, gh_name, people, check_in, nights, total_price) VALUES (?, ?, ?, ?, ?, ?, ?)";
 				ps = conn.prepareStatement(query);
 				ps.setString(1, uuid);
 				ps.setString(2, client.getId());
@@ -596,6 +593,7 @@ public class GHDAOImpl implements GHDAO {
 
 	@Override
 	public void updateBooking(Client client, Booking booking) throws SQLException {
+		applyTier(client);
 		Connection conn = null;
 		PreparedStatement ps = null;
 		if (client.getId().equals(checkId(booking.getBookingId()))) {
@@ -746,14 +744,14 @@ public class GHDAOImpl implements GHDAO {
 				if (bookingStatus == null)
 					bookingStatus = "알 수 없음";
 
-				switch (bookingStatus.toLowerCase()) {
-				case "checked-in":
+				switch (bookingStatus) {
+				case "S":
 					checkedIn.append(info);
 					break;
-				case "upcoming":
+				case "R":
 					upcoming.append(info);
 					break;
-				case "canceled":
+				case "C":
 					canceled.append(info);
 					break;
 				default:

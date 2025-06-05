@@ -15,8 +15,8 @@ public interface GHDAO {
 	/*
 	 * Client
 	 */
-	void login(String id, String password);
-	void logout();
+	void login(String id, String password, String type) throws SQLException;
+	Client login(String id, String password) throws SQLException;
 	void reserveBooking(Client client, Booking booking) throws SQLException;
 	ArrayList<Guesthouse> searchAvailableGH(LocalDate checkIn, int night, int peopleCnt) throws SQLException;
 	ArrayList<Guesthouse> searchAvailableGH(LocalDate checkIn, int night, int peopleCnt, int price, char mbti) throws SQLException;
