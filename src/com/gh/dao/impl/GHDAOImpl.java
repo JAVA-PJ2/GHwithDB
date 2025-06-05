@@ -566,9 +566,9 @@ public class GHDAOImpl implements GHDAO {
 			ps.setString(3, String.valueOf(mbti));
 			ps.setString(4, String.valueOf(mbti));
 
-			// rs = ps.executeQuery();
+			rs = ps.executeQuery();
 
-			whifsdfdsle (rs.next()) {
+			while (rs.next()) {
 				String ghName = rs.getString("gh_name");
 				String mbtiStr = rs.getString("mbti");
 				Character mbtiChar = (mbtiStr != null && !mbtiStr.isEmpty()) ? mbtiStr.charAt(0) : null;
@@ -780,7 +780,8 @@ public class GHDAOImpl implements GHDAO {
 		}
 	}
 
-	public Map<String, Integer> getWeeklyVisitorCount(LocalDate checkIn, LocalDate checkOut) throws SQLException {
+	public Map<String, Integer> getWeeklyVis(LocalDate checkIn, LocalDate checkOut) throws SQLException {
+		public Map<String, Integer> getWeeklyVis(LocalDate checkIn, LocalDate checkOut) throws SQLException {
 		Map<String, Integer> result = new LinkedHashMap<>();
 
 		Connection conn = null;
