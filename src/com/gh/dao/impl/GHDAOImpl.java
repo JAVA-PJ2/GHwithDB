@@ -236,12 +236,6 @@ public class GHDAOImpl implements GHDAO {
 
 	}
 
-	@Override
-	public void logout() {
-		// TODO Auto-generated method stub
-
-	}
-
 	private boolean checkId(Client client) throws SQLException {
 		Connection conn = null;
 		PreparedStatement ps = null;
