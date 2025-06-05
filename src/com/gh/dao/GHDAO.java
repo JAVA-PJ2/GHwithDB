@@ -21,7 +21,7 @@ public interface GHDAO {
 	ArrayList<Guesthouse> searchAvailableGH(LocalDate checkIn, int night, int peopleCnt) throws SQLException;
 	ArrayList<Guesthouse> searchAvailableGH(LocalDate checkIn, int night, int peopleCnt, int price, char mbti) throws SQLException;
 	void printMyInfo(Client c);
-	void cancleBooking(Client client, String bookingId) throws SQLException;
+	void cancelBooking(Client client, String bookingId) throws SQLException;
 	void updateBooking(Client client, Booking booking) throws SQLException;
 	/*
 	 * Manager

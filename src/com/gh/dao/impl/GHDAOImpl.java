@@ -467,6 +467,34 @@ public class GHDAOImpl implements GHDAO {
 	}
 
 	@Override
+	public void cancelBooking(Client client, String bookingId) throws SQLException {
+		Connection conn = null;
+		PreparedStatement ps = null;
+		if (client.getId().equals(checkId(bookingId))) {
+			if (checkBookingStatus(bookingId)) {
+				try {
+					conn = getConnect();
+					String query = "UPDATE booking_detail SET booking_status=? WHERE booking_id=?";
+					ps = conn.prepareStatement(query);
+					ps.setString(1, "C");
+					ps.setString(2, bookingId);
+					if(ps.executeUpdate() == 1) {
+						System.out.println("예약이 취소되었습니다.");
+					} else {
+						System.out.println("잘못된 입력입니다.");
+					}
+				} finally {
+					closeAll(ps, conn);
+				}
+			}else {
+				System.out.println("취소할 수 있는 상태의 예약이 아닙니다.");
+			}
+		}else {
+			System.out.println("잘못된 사용자입니다.");
+		}
+	}
+	
+	@Override
 	public ArrayList<Guesthouse> recommendGH(int price, char mbti) {
 		// TODO Auto-generated method stub
 		return null;
