@@ -605,7 +605,6 @@ public class GHDAOImpl implements GHDAO {
 		}
 	}
 
-	@Override
 	public Map<String, Integer> getWeeklyVisitorCount(LocalDate checkIn, LocalDate checkOut) throws SQLException {
 		Map<String, Integer> result = new LinkedHashMap<>();
 
@@ -617,27 +616,28 @@ public class GHDAOImpl implements GHDAO {
 			conn = getConnect();
 
 			// 주별 방문 고객 수 집계
-			String query = "SELECT YEAR(check_in) AS year, MONTH(check_in) AS month, WEEK(check_in, 1) AS week_num, "
-					+ "COUNT(DISTINCT client_id) AS visitor_count " + "FROM booking "
-					+ "WHERE check_in BETWEEN ? AND ? " + // 기간 조건 (파라미터 바인딩)
-					"GROUP BY year, month, week_num " + "ORDER BY year, month, week_num";
+			String query = 
+		            "SELECT DISTINCT " +
+		            " YEAR(check_in) AS year, " +
+		            " MONTH(check_in) AS month, " +
+		            " WEEK(check_in, 1) AS week_num, " +
+		            " COUNT(client_id) OVER (PARTITION BY YEAR(check_in), MONTH(check_in), WEEK(check_in, 1)) AS visitor_count " +
+		            "FROM booking " +
+		            "WHERE check_in BETWEEN ? AND ? " +
+		            "ORDER BY year, month, week_num";
 
-			/*
-			 * PreparedStatement의 SQL 쿼리 내 파라미터에 LocalDate 타입인 checkIn, checkOut을
-			 * java.sql.Date 타입으로 변환해 전달하기 위해 사용됨
-			 */
 			ps = conn.prepareStatement(query);
 			ps.setDate(1, java.sql.Date.valueOf(checkIn));
 			ps.setDate(2, java.sql.Date.valueOf(checkOut));
 			rs = ps.executeQuery();
 
 			while (rs.next()) {
-				int year = rs.getInt("year"); // 연도
-				int month = rs.getInt("month"); // 월
-				int week = rs.getInt("week_num"); // 주차
-				int count = rs.getInt("visitor_count"); // 방문 고객 수
+				int year = rs.getInt("year");
+				int month = rs.getInt("month");
+				int week = rs.getInt("week_num");
+				int count = rs.getInt("visitor_count");
 
-				String key = String.format("%d-%02d 주차 %d주차", year, month, week);
+				String key = String.format("%d년 %02d월 %d주차", year, month, week);
 				result.put(key, count);
 			}
 
