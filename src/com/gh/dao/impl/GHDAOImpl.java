@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -851,9 +852,25 @@ Map<String, Double> result = new LinkedHashMap<>();
 		return null;
 	}
 
+	private HashMap<String, ArrayList<Booking>> groupedBookingsByClient() throws SQLException {
+		HashMap<String, ArrayList<Booking>> map = new HashMap<String, ArrayList<Booking>>();
+		ArrayList<Booking> allBookings = getAllBookings();
+		if (allBookings.size() == 0) return map;
+		String clientId = null;
+		for (Booking b : allBookings) {
+			if (b.getClientId() != clientId) {
+				clientId = b.getClientId();
+				map.put(clientId ,new ArrayList<Booking>());
+			}
+			map.get(clientId).add(b);
+		}
+		return map;
+	}
+	
 	@Override
 	public ArrayList<Client> getAllClients() throws SQLException {
 		ArrayList<Client> clients = new ArrayList<Client>();
+		HashMap<String, ArrayList<Booking>> map = groupedBookingsByClient();
 		Connection conn = null;
 		PreparedStatement ps = null;
 		ResultSet rs = null;
@@ -869,13 +886,14 @@ Map<String, Double> result = new LinkedHashMap<>();
 									   rs.getString("client_name"),
 									   rs.getString("mbti").charAt(0),
 									   rs.getString("tier").charAt(0),
-									   getBookings(clientId)));
+									   map.get(clientId)));
 			}
 		}finally {
 			closeAll(rs, ps, conn);
 		}
 		return clients;
 	}
+	
 	public ArrayList<Booking> getBookings(String clientId) throws SQLException {
 		ArrayList<Booking> bookings = new ArrayList<Booking>();
 		Connection conn = null;
