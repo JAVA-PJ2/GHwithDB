@@ -171,7 +171,7 @@ public class GHDAOTest {
 					case "1":
 						System.out.println("예약하기 호출됨");
 						Booking booking = new Booking(c.getId(), "힐링하우스", 2, LocalDate.of(2025, 06, 5), 3);
-						
+
 						try {
 							dao.reserveBooking(c, booking);
 						} catch (SQLException e) {
@@ -180,7 +180,8 @@ public class GHDAOTest {
 						break;
 					case "2":
 						System.out.println("예약 수정 호출됨");
-						Booking b = new Booking("7bc43af7-8c8a-47a7-9aa0-7b0b7ce7e06e", c.getId(), "힐링하우스", 1, LocalDate.of(2025, 06, 5), 3, 17000);
+						Booking b = new Booking("7bc43af7-8c8a-47a7-9aa0-7b0b7ce7e06e", c.getId(), "힐링하우스", 1,
+								LocalDate.of(2025, 06, 5), 3, 17000);
 						try {
 							dao.updateBooking(c, b);
 						} catch (SQLException e) {
@@ -189,8 +190,12 @@ public class GHDAOTest {
 						break;
 					case "3":
 						System.out.println("예약 취소 호출됨");
-						
-						
+
+						try {
+							dao.cancelBooking(c, "7bc43af7-8c8a-47a7-9aa0-7b0b7ce7e06e");
+						} catch (SQLException e) {
+							System.out.println(e.getMessage());
+						}
 						break;
 					case "4":
 						System.out.println("실시간 전체 조회 시작 (q 입력 시 종료)");
@@ -239,24 +244,24 @@ public class GHDAOTest {
 					case "1":
 						System.out.println("주간 방문자 수 호출됨\n");
 						try {
-						    LocalDate start = LocalDate.of(2025, 6, 1);
-						    LocalDate end = LocalDate.of(2025, 6, 30);
+							LocalDate start = LocalDate.of(2025, 6, 1);
+							LocalDate end = LocalDate.of(2025, 6, 30);
 
-						    Map<String, Integer> weeklyVisitors = dao.getWeeklyVisitorCount(start, end);
+							Map<String, Integer> weeklyVisitors = dao.getWeeklyVisitorCount(start, end);
 
-						    System.out.println("=== 2025년 6월 주별 방문 고객 수 ===");
+							System.out.println("=== 2025년 6월 주별 방문 고객 수 ===");
 
-						    if (weeklyVisitors.isEmpty()) {
-						        System.out.println("방문 기록이 없습니다.\n");
-						    } else {
-						        for (Map.Entry<String, Integer> entry : weeklyVisitors.entrySet()) {
-						            System.out.printf("%s : %d명\n", entry.getKey(), entry.getValue());
-						        }
-						    }
+							if (weeklyVisitors.isEmpty()) {
+								System.out.println("방문 기록이 없습니다.\n");
+							} else {
+								for (Map.Entry<String, Integer> entry : weeklyVisitors.entrySet()) {
+									System.out.printf("%s : %d명\n", entry.getKey(), entry.getValue());
+								}
+							}
 
 						} catch (SQLException e) {
-						    System.out.println("DB 오류: " + e.getMessage());
-						    e.printStackTrace();
+							System.out.println("DB 오류: " + e.getMessage());
+							e.printStackTrace();
 						}
 						break;
 					case "2":
@@ -264,20 +269,19 @@ public class GHDAOTest {
 						try {
 							LocalDate start = LocalDate.of(2025, 06, 01);
 							LocalDate end = LocalDate.of(2025, 06, 30);
-							
+
 							Map<String, Integer> weeklySales = dao.getWeeklySales(start, end);
-							
+
 							System.out.println("=== 2025년 6월 주별 매출 ===");
-							
+
 							if (weeklySales.isEmpty()) {
-						        System.out.println("매출 기록이 없습니다.\n");
-						    } else {
-						    	for (Map.Entry<String, Integer> entry : weeklySales.entrySet()) {
-						    		System.out.printf("%s: %d원\n", entry.getKey(), entry.getValue());
-						    	}						    	
-						    }
-							
-							
+								System.out.println("매출 기록이 없습니다.\n");
+							} else {
+								for (Map.Entry<String, Integer> entry : weeklySales.entrySet()) {
+									System.out.printf("%s: %d원\n", entry.getKey(), entry.getValue());
+								}
+							}
+
 						} catch (SQLException e) {
 							System.out.println(e.getMessage());
 						}
