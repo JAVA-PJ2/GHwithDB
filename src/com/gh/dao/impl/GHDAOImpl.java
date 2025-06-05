@@ -18,6 +18,7 @@ import java.util.UUID;
 import com.gh.dao.GHDAO;
 import com.gh.dao.PasswordUtil;
 import com.gh.exception.DMLException;
+import com.gh.exception.RecordNotFoundException;
 import com.gh.vo.Booking;
 import com.gh.vo.Client;
 import com.gh.vo.Guesthouse;
@@ -1092,10 +1093,33 @@ public class GHDAOImpl implements GHDAO {
 	}
 
 
+
 	@Override
-	public Client getClientById(String id) {
-		// TODO Auto-generated method stub
-		return null;
+	public Client getClientById(String id) throws RecordNotFoundException {
+		Client cl = null;
+
+		String query = "SELECT client_id, client_password, client_name, mbti, tier FROM customer WHERE client_id=?";
+		try (Connection conn = getConnect(); PreparedStatement ps = conn.prepareStatement(query);) {
+			ps.setString(1, id);
+
+			try (ResultSet rs = ps.executeQuery();) {
+				if (rs.next()) {
+					String clientId = rs.getString("client_id");
+					String mbtiStr = rs.getString("mbti");
+					char mbti = (mbtiStr != null && !mbtiStr.isEmpty()) ? mbtiStr.charAt(0) : ' ';
+
+					String tierStr = rs.getString("tier");
+					Character tier = (tierStr != null && !tierStr.isEmpty()) ? tierStr.charAt(0) : null;
+
+					cl = new Client(clientId, rs.getString("client_password"), rs.getString("client_name"), mbti, tier,
+							getBookings(clientId));
+				}
+
+			}
+			return cl;
+		} catch (SQLException e) {
+			throw new RecordNotFoundException("올바른 사용자가 아닙니다.");
+		}
 	}
 
 	private HashMap<String, ArrayList<Booking>> groupedBookingsByClient() throws SQLException {

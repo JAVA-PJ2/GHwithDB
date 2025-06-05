@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Map;
 
 import com.gh.exception.DMLException;
+import com.gh.exception.RecordNotFoundException;
 import com.gh.vo.Booking;
 import com.gh.vo.Client;
 import com.gh.vo.Guesthouse;
@@ -33,7 +34,7 @@ public interface GHDAO {
 	double calAverageVisitInterval(String clientId) throws SQLException;
 	Map<String, Double> calAverageStayByTier() throws DMLException, SQLException;
 	double calCancelRate() throws SQLException;
-	Client getClientById(String id) throws SQLException;
+	Client getClientById(String id) throws RecordNotFoundException;
 	ArrayList<Client> getAllClients() throws SQLException;
 	ArrayList<Booking> getBookings(String clientId) throws SQLException;
 	ArrayList<Booking> getAllBookings() throws SQLException;
