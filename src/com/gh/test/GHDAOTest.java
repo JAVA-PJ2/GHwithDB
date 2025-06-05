@@ -345,7 +345,13 @@ public class GHDAOTest {
 						break;
 					case "7":
 						System.out.println("취소율 계산 호출됨\n");
-						
+						 try {
+						        double cancelRate = dao.calCancelRate();
+						        System.out.printf("총 예약 대비 취소율: %.2f%%\n\n", cancelRate);
+						    } catch (Exception e) {
+						        System.out.println("취소율 계산 중 오류 발생: " + e.getMessage());
+						        e.printStackTrace();
+						    }
 						break;
 					case "8":
 						System.out.println("아이디로 사용자 조회 호출됨\n");
@@ -353,7 +359,6 @@ public class GHDAOTest {
 						break;
 					case "9":
 						System.out.println("전체 사용자 조회 호출됨\n");
-						
 						   try {
 						        ArrayList<Client> clients = dao.getAllClients();
 						        if (clients.isEmpty()) {
