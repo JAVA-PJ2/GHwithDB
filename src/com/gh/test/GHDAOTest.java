@@ -15,6 +15,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.gh.dao.InsertDummyData;
 import com.gh.dao.impl.GHDAOImpl;
+import com.gh.exception.DMLException;
 import com.gh.exception.RecordNotFoundException;
 import com.gh.vo.Booking;
 import com.gh.vo.Client;
@@ -309,7 +310,7 @@ public class GHDAOTest {
 										mostBooked.getName(), mostBooked.getMbti(), mostBooked.getPriceWeekday(),
 										mostBooked.getPriceWeekend(), mostBooked.getMaxCapacity());
 							}
-						} catch (SQLException e) {
+						} catch (RecordNotFoundException e) {
 							System.out.println("오류: " + e.getMessage());
 							e.printStackTrace();
 						}
@@ -321,7 +322,7 @@ public class GHDAOTest {
 							String analysis = dao.analzeTendencyByTier();
 							System.out.println("=== 등급별 대표 성향 ===");
 							System.out.println(analysis);
-						} catch (SQLException e) {
+						} catch (DMLException e) {
 							System.out.println("오류 발생: " + e.getMessage());
 							e.printStackTrace();
 						}
@@ -330,13 +331,13 @@ public class GHDAOTest {
 						System.out.println("평균 방문 주기 호출됨\n");
 
 						try {
-							double avgInterval = dao.calAverageVisitInterval("user1");
+							double avgInterval = dao.calcAverageVisitInterval("user1");
 							System.out.printf("=== [%s님의 평균 방문 주기] ===\n", "유나");
 							if (avgInterval > 0)
 								System.out.printf("평균 방문 간격: %.2f일\n", avgInterval);
 							else
 								System.out.println("예약 이력이 부족하거나 방문 간격 데이터를 계산할 수 없습니다.");
-						} catch (SQLException e) {
+						} catch (RecordNotFoundException e) {
 							System.out.println("오류 발생: " + e.getMessage());
 							e.printStackTrace();
 						}
@@ -414,7 +415,7 @@ public class GHDAOTest {
 									System.out.println("------------------------------------------------------");
 								}
 							}
-						} catch (SQLException e) {
+						} catch (RecordNotFoundException e) {
 							System.out.println("오류 발생: " + e.getMessage());
 							e.printStackTrace();
 						}
@@ -444,7 +445,7 @@ public class GHDAOTest {
 					            System.out.println();
 					        }
 
-					    } catch (SQLException e) {
+					    } catch (RecordNotFoundException e) {
 					        System.out.println("예약 정보 조회 중 오류 발생: " + e.getMessage());
 					        e.printStackTrace();
 					    }

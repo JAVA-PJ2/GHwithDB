@@ -726,208 +726,161 @@ public class GHDAOImpl implements GHDAO {
 	}
 
 	@Override
-	public String analzeTendencyByTier() throws SQLException {
-		Connection conn = null;
-		PreparedStatement ps = null;
-		PreparedStatement psTier = null;
-		ResultSet rs = null;
-		ResultSet rsTier = null;
+	public String analzeTendencyByTier() throws DMLException {
 		StringBuilder result = new StringBuilder();
 
 		char[] tiers = { 'b', 's', 'g' };
-
-		try {
-			conn = getConnect();
-
-			// 1. DB에서 distinct tier 값들 먼저 가져오기
-			String tierQuery = "SELECT DISTINCT tier FROM client WHERE tier IN ('b', 's', 'g')";
-			psTier = conn.prepareStatement(tierQuery);
-			rsTier = psTier.executeQuery();
-
+		// 1. DB에서 distinct tier 값들 먼저 가져오기
+		String tierQuery = "SELECT DISTINCT tier FROM client WHERE tier IN ('b', 's', 'g')";
+		try (Connection conn = getConnect();
+				PreparedStatement psTier = conn.prepareStatement(tierQuery);
+				ResultSet rsTier = psTier.executeQuery();) {
 			// 2. 대표 성향 쿼리 준비
 			String query = "SELECT " + "CASE c.tier " + "    WHEN 'b' THEN 'bronze' " + "    WHEN 's' THEN 'silver' "
 					+ "    WHEN 'g' THEN 'gold' " + "    ELSE '알 수 없음' " + "END AS tier_name, "
 					+ "c.mbti, COUNT(*) AS cnt " + "FROM client c " + "JOIN booking b ON c.client_id = b.client_id "
 					+ "WHERE c.tier = ? AND c.mbti IN ('E', 'I') " + "GROUP BY tier_name, c.mbti "
 					+ "ORDER BY cnt DESC " + "LIMIT 1";
-
-			ps = conn.prepareStatement(query);
-
-			for (char tier : tiers) {
-				System.out.println("현재 tier: " + tier);
-				ps.setString(1, String.valueOf(tier));
-				rs = ps.executeQuery();
-
-				String tierStr = switch (tier) {
-				case 'b' -> "bronze";
-				case 's' -> "silver";
-				case 'g' -> "gold";
-				default -> "null";
-				};
-
-				if (rs.next()) {
-					String mbti = rs.getString("mbti");
-					System.out.println("쿼리 결과 mbti: " + mbti);
-					result.append(String.format("%s 등급의 대표 성향: %s\n", tierStr, mbti));
-				} else {
-					System.out.println("쿼리 결과 없음");
-					result.append(String.format("%s 등급의 대표 성향: 알 수 없음\n", tierStr));
+			try (PreparedStatement ps = conn.prepareStatement(query);) {
+				for (char tier : tiers) {
+					System.out.println("현재 tier: " + tier);
+					ps.setString(1, String.valueOf(tier));
+					try (ResultSet rs = ps.executeQuery();) {
+						String tierStr = switch (tier) {
+						case 'b' -> "bronze";
+						case 's' -> "silver";
+						case 'g' -> "gold";
+						default -> "null";
+						};
+						if (rs.next()) {
+							String mbti = rs.getString("mbti");
+							System.out.println("쿼리 결과 mbti: " + mbti);
+							result.append(String.format("%s 등급의 대표 성향: %s\n", tierStr, mbti));
+						} else {
+							System.out.println("쿼리 결과 없음");
+							result.append(String.format("%s 등급의 대표 성향: 알 수 없음\n", tierStr));
+						}
+					}
 				}
-
-				rs.close();
 			}
-		} finally {
-			closeAll(rsTier, psTier, null);
-			closeAll(null, ps, conn);
+		}catch (SQLException e) {
+			throw new DMLException("데이터를 가져오지 못했습니다.");
 		}
-
 		return result.toString();
 	}
 
 	@Override
-	public Guesthouse getMostBookedGH(LocalDate checkIn, LocalDate checkOut) throws SQLException {
+	public Guesthouse getMostBookedGH(LocalDate checkIn, LocalDate checkOut) throws RecordNotFoundException {
 		Guesthouse gh = null;
-		Connection conn = null;
-		PreparedStatement ps = null;
-		ResultSet rs = null;
-		try {
-			conn = getConnect();
-			String query = "SELECT gh_name, COUNT(*) " + "FROM booking_detail " + "WHERE booking_date BETWEEN ? AND ? "
-					+ "GROUP BY gh_name " + "ORDER BY COUNT(*) DESC " + "LIMIT 1";
-			ps = conn.prepareStatement(query);
-			ps.setString(1, checkIn.toString());
-			ps.setString(2, checkOut.toString());
-			rs = ps.executeQuery();
-			String ghName = null;
-			if (rs.next()) {
-				ghName = rs.getString("gh_name");
-			} else {
-				System.out.println("등록된 예약이 없습니다.");
-				return null;
+		String ghName = null;
+		String mostBookedQuery = "SELECT gh_name, COUNT(*) AS cnt " + "FROM booking_detail "
+				+ "WHERE booking_date BETWEEN ? AND ? " + "GROUP BY gh_name " + "ORDER BY cnt DESC " + "LIMIT 1";
+		try (Connection conn = getConnect(); PreparedStatement ps1 = conn.prepareStatement(mostBookedQuery)) {
+			ps1.setString(1, checkIn.toString());
+			ps1.setString(2, checkOut.toString());
+			try (ResultSet rs1 = ps1.executeQuery()) {
+				if (rs1.next()) {
+					ghName = rs1.getString("gh_name");
+				} else {
+					// 예약이 없는 경우
+					throw new RecordNotFoundException("해당 기간에 예약이 없습니다.");
+				}
 			}
-			conn = getConnect();
-			query = "SELECT * FROM guesthouse WHERE gh_name = ?";
-			ps = conn.prepareStatement(query);
-			ps.setString(1, ghName);
-			rs = ps.executeQuery();
-			if (rs.next()) {
-				gh = new Guesthouse(rs.getString("gh_name"), rs.getString("mbti").charAt(0), rs.getInt("price_weekday"),
-						rs.getInt("price_weekend"), rs.getInt("max_capacity"));
-			} else {
-				System.out.println("잘못된 입력입니다.");
+			String guesthouseQuery = "SELECT * FROM guesthouse WHERE gh_name = ?";
+			try (PreparedStatement ps2 = conn.prepareStatement(guesthouseQuery)) {
+				ps2.setString(1, ghName);
+				try (ResultSet rs2 = ps2.executeQuery()) {
+					if (rs2.next()) {
+						gh = new Guesthouse(rs2.getString("gh_name"), rs2.getString("mbti").charAt(0),
+								rs2.getInt("price_weekday"), rs2.getInt("price_weekend"), rs2.getInt("max_capacity"));
+					} else {
+						throw new RecordNotFoundException("Guesthouse 정보가 존재하지 않습니다.");
+					}
+				}
 			}
-		} finally {
-			closeAll(rs, ps, conn);
+		} catch (SQLException e) {
+			throw new RecordNotFoundException("DB 오류가 발생했습니다: " + e.getMessage());
 		}
 		return gh;
 	}
 
 	@Override
-	public double calAverageVisitInterval(String clientId) throws SQLException {
-		Connection conn = null;
-		PreparedStatement ps = null;
-		ResultSet rs = null;
+	public double calcAverageVisitInterval(String clientId) throws RecordNotFoundException {
 		double totalInterval = 0;
 		int count = 0;
-		try {
-			conn = getConnect();
-			String query = "SELECT booking_id, check_in, "
-					+ "DATEDIFF(check_in, LAG(check_in) OVER (PARTITION BY client_id ORDER BY check_in)) AS visit_interval "
-					+ "FROM booking " + "WHERE client_id = ? " + "ORDER BY check_in";
-			ps = conn.prepareStatement(query);
+		String query = "SELECT booking_id, check_in, "
+				+ "DATEDIFF(check_in, LAG(check_in) OVER (PARTITION BY client_id ORDER BY check_in)) AS visit_interval "
+				+ "FROM booking " + "WHERE client_id = ? " + "ORDER BY check_in";
+		try (Connection conn = getConnect();
+		PreparedStatement ps = conn.prepareStatement(query);) {
 			ps.setString(1, clientId);
-			rs = ps.executeQuery();
-			while (rs.next()) {
-				int interval = rs.getInt("visit_interval");
-				if (!rs.wasNull()) {
-					totalInterval += interval;
-					count++;
+			try (ResultSet rs = ps.executeQuery();) {
+				while (rs.next()) {
+					int interval = rs.getInt("visit_interval");
+					if (!rs.wasNull()) {
+						totalInterval += interval;
+						count++;
+					}
 				}
 			}
 		} catch (SQLException e) {
-			e.getMessage();
-		} finally {
-			closeAll(rs, ps, conn);
+			throw new RecordNotFoundException("올바른 사용자가 아닙니다.");
 		}
 		return count > 0 ? totalInterval/count : 0;
 	}
 
 	@Override
-	public Map<String, Double> calAverageStayByTier() throws DMLException, SQLException {
+	public Map<String, Double> calAverageStayByTier() throws DMLException {
 		Map<String, Double> result = new LinkedHashMap<>();
 
-		Connection conn = null;
-		PreparedStatement ps = null;
-		ResultSet rs = null;
-
-		try {
-			conn = getConnect();
-
-			String query = "SELECT " + "CASE c.tier " + "    WHEN 'b' THEN 'bronze' " + "    WHEN 's' THEN 'silver' "
-					+ "    WHEN 'g' THEN 'gold' " + "    ELSE '알 수 없음' " + "END AS tier_name, "
-					+ "AVG(b.nights) AS avg_nights " + // 숙박 일수 평균
-					"FROM client c " + "JOIN booking b ON c.client_id = b.client_id " + "GROUP BY c.tier "
-					+ "ORDER BY avg_nights DESC";
-			ps = conn.prepareStatement(query);
-			rs = ps.executeQuery();
-
-			while (rs.next()) {
-				String tierName = rs.getString("tier_name");
-				double avgNights = rs.getDouble("avg_nights");
-				result.put(tierName, avgNights);
-			}
-
-		} catch (SQLException e) {
-			throw new DMLException("등급별 숙박 일수 평균을 구하는 중 오류 발생: " + e.getMessage());
-		} finally {
-			closeAll(rs, ps, conn);
-		}
-
+	
+				String query = "SELECT " + "CASE c.tier " + "    WHEN 'b' THEN 'bronze' " + "    WHEN 's' THEN 'silver' "
+						+ "    WHEN 'g' THEN 'gold' " + "    ELSE '알 수 없음' " + "END AS tier_name, "
+						+ "AVG(b.nights) AS avg_nights " + // 숙박 일수 평균
+						"FROM client c " + "JOIN booking b ON c.client_id = b.client_id " + "GROUP BY c.tier "
+						+ "ORDER BY avg_nights DESC";
+				try(Connection conn = getConnect(); PreparedStatement ps = conn.prepareStatement(query); ResultSet rs = ps.executeQuery();) {
+				while (rs.next()) {
+					String tierName = rs.getString("tier_name");
+					double avgNights = rs.getDouble("avg_nights");
+					result.put(tierName, avgNights);
+				}
+			} catch (SQLException e) {
+				throw new DMLException("등급별 숙박 일수 평균을 구하는 중 오류 발생: " + e.getMessage());
+			} 
 		return result;
 	}
 
 	@Override
-	public double calCancelRate() throws SQLException {
-		Connection conn = null;
-		PreparedStatement ps = null;
-		ResultSet rs = null;
+	public double calCancelRate() throws RecordNotFoundException {
+		
 		double cancellationRate = 0.0;
-
-		try {
-			conn = getConnect();
-
+		String totalQuery = "SELECT COUNT(*) FROM booking_detail";
+		try (Connection conn = getConnect();
+				PreparedStatement ps = conn.prepareStatement(totalQuery);
+				ResultSet rs = ps.executeQuery();) {
 			// 1️. 전체 예약 수
-			String totalQuery = "SELECT COUNT(*) FROM booking_detail";
-			ps = conn.prepareStatement(totalQuery);
-			rs = ps.executeQuery();
 			int totalBookings = 0;
 			if (rs.next()) {
 				totalBookings = rs.getInt(1);
 			}
-			rs.close();
-			ps.close();
-
 			if (totalBookings == 0) {
 				// 예약이 없는 경우 취소율은 0
 				return 0.0;
 			}
-
 			// 2️.취소된 예약 수
 			String canceledQuery = "SELECT COUNT(*) FROM booking_detail WHERE booking_status='C'";
-			ps = conn.prepareStatement(canceledQuery);
-			rs = ps.executeQuery();
-			int canceledBookings = 0;
-			if (rs.next()) {
-				canceledBookings = rs.getInt(1);
+			try (PreparedStatement ps2 = conn.prepareStatement(canceledQuery);ResultSet rs2 = ps2.executeQuery();) {
+				int canceledBookings = 0;
+				if (rs.next()) {
+					canceledBookings = rs.getInt(1);
+				}
+				// 3️. 취소율 계산
+				cancellationRate = (canceledBookings / (double) totalBookings) * 100.0;
 			}
-
-			// 3️. 취소율 계산
-			cancellationRate = (canceledBookings / (double) totalBookings) * 100.0;
-
-		} finally {
-			closeAll(rs, ps, conn);
+		}catch(SQLException e) {
+			throw new RecordNotFoundException("예약을 찾지 못했습니다.");
 		}
-
 		return cancellationRate;
 	}
 
@@ -937,23 +890,19 @@ public class GHDAOImpl implements GHDAO {
 	public Client getClientById(String id) throws RecordNotFoundException {
 		Client cl = null;
 
-		String query = "SELECT client_id, client_password, client_name, mbti, tier FROM client WHERE client_id=?";
+		String query = "SELECT client_id, client_password, client_name, mbti, tier FROM customer WHERE client_id=?";
 		try (Connection conn = getConnect(); PreparedStatement ps = conn.prepareStatement(query);) {
 			ps.setString(1, id);
-
 			try (ResultSet rs = ps.executeQuery();) {
 				if (rs.next()) {
 					String clientId = rs.getString("client_id");
 					String mbtiStr = rs.getString("mbti");
 					char mbti = (mbtiStr != null && !mbtiStr.isEmpty()) ? mbtiStr.charAt(0) : ' ';
-
 					String tierStr = rs.getString("tier");
 					Character tier = (tierStr != null && !tierStr.isEmpty()) ? tierStr.charAt(0) : null;
-
 					cl = new Client(clientId, rs.getString("client_password"), rs.getString("client_name"), mbti, tier,
 							getBookings(clientId));
 				}
-
 			}
 			return cl;
 		} catch (SQLException e) {
@@ -961,7 +910,7 @@ public class GHDAOImpl implements GHDAO {
 		}
 	}
 
-	private HashMap<String, ArrayList<Booking>> groupedBookingsByClient() throws SQLException {
+	private HashMap<String, ArrayList<Booking>> groupedBookingsByClient() throws RecordNotFoundException {
 		HashMap<String, ArrayList<Booking>> map = new HashMap<String, ArrayList<Booking>>();
 		ArrayList<Booking> allBookings = getAllBookings();
 		if (allBookings.size() == 0)
@@ -978,70 +927,58 @@ public class GHDAOImpl implements GHDAO {
 	}
 
 	@Override
-	public ArrayList<Client> getAllClients() throws SQLException {
+	public ArrayList<Client> getAllClients() throws RecordNotFoundException {
 		ArrayList<Client> clients = new ArrayList<Client>();
 		HashMap<String, ArrayList<Booking>> map = groupedBookingsByClient();
-		Connection conn = null;
-		PreparedStatement ps = null;
-		ResultSet rs = null;
-		try {
-			conn = getConnect();
-			String query = "SELECT client_id, client_password, client_name, ifnull(mbti, 'X') mbti, ifnull(tier, 'U') tier FROM client";
-			ps = conn.prepareStatement(query);
-			rs = ps.executeQuery();
+		String query = "SELECT client_id, client_password, client_name, ifnull(mbti, 'X') mbti, ifnull(tier, 'U') tier FROM client";
+		try (Connection conn = getConnect();
+				PreparedStatement ps = conn.prepareStatement(query);
+				ResultSet rs = ps.executeQuery();) {
 			while (rs.next()) {
 				String clientId = rs.getString("client_id");
 				clients.add(new Client(clientId, rs.getString("client_password"), rs.getString("client_name"),
 						rs.getString("mbti").charAt(0), rs.getString("tier").charAt(0), map.get(clientId)));
 			}
-		} finally {
-			closeAll(rs, ps, conn);
+		} catch (SQLException e) {
+			throw new RecordNotFoundException("데이터가 존재하지 않습니다.");
 		}
 		return clients;
 	}
 
-	public ArrayList<Booking> getBookings(String clientId) throws SQLException {
+	public ArrayList<Booking> getBookings(String clientId) throws RecordNotFoundException {
 		ArrayList<Booking> bookings = new ArrayList<Booking>();
-		Connection conn = null;
-		PreparedStatement ps = null;
-		ResultSet rs = null;
-		try {
-			conn = getConnect();
-			String query = "SELECT * FROM booking WHERE client_id=?";
-			ps = conn.prepareStatement(query);
+		String query = "SELECT * FROM booking WHERE client_id=?";
+		try (Connection conn = getConnect(); PreparedStatement ps = conn.prepareStatement(query);) {
 			ps.setString(1, clientId);
-			rs = ps.executeQuery();
-			while (rs.next()) {
-				bookings.add(
-						new Booking(rs.getString("booking_id"), clientId, rs.getString("gh_name"), rs.getInt("people"),
-								rs.getDate("check_in").toLocalDate(), rs.getInt("nights"), rs.getInt("total_price")));
+			try (ResultSet rs = ps.executeQuery();) {
+				while (rs.next()) {
+					bookings.add(new Booking(rs.getString("booking_id"), clientId, rs.getString("gh_name"),
+							rs.getInt("people"), rs.getDate("check_in").toLocalDate(), rs.getInt("nights"),
+							rs.getInt("total_price")));
+				}
+				return bookings;
 			}
-		} finally {
-			closeAll(rs, ps, conn);
+		} catch (SQLException e) {
+			throw new RecordNotFoundException("올바른 사용자가 아닙니다.");
 		}
-		return bookings;
 	}
 
 	@Override
-	public ArrayList<Booking> getAllBookings() throws SQLException {
-		Connection conn = null;
-		PreparedStatement ps = null;
-		ResultSet rs = null;
+	public ArrayList<Booking> getAllBookings() throws RecordNotFoundException {
 		ArrayList<Booking> list = new ArrayList<Booking>();
 
-		try {
-			conn = getConnect();
-			String query = "SELECT booking_id, client_id, people, " + "check_in, nights,  total_price,  gh_name "
-					+ "FROM booking " + "ORDER BY client_id";
-			ps = conn.prepareStatement(query);
-			rs = ps.executeQuery();
+		String query = "SELECT booking_id, client_id, people, " + "check_in, nights,  total_price,  gh_name "
+				+ "FROM booking " + "ORDER BY client_id";
+		try (Connection conn = getConnect();
+				PreparedStatement ps = conn.prepareStatement(query);
+				ResultSet rs = ps.executeQuery();) {
 			while (rs.next()) {
 				list.add(new Booking(rs.getString("booking_id"), rs.getString("client_id"), rs.getString("gh_name"),
 						rs.getInt("people"), rs.getDate("check_in").toLocalDate(), rs.getInt("nights"),
 						rs.getInt("total_price")));
 			}
-		} finally {
-			closeAll(rs, ps, conn);
+		} catch (SQLException e) {
+			throw new RecordNotFoundException("예약을 찾지 못했습니다.");
 		}
 		return list;
 	}

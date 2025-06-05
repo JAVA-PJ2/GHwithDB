@@ -1,6 +1,5 @@
 package com.gh.dao;
 
-import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Map;
@@ -31,15 +30,15 @@ public interface GHDAO {
 	 */
 	Map<String, Integer> getWeeklyVisitorCount(LocalDate checkIn, LocalDate checkOut) throws RecordNotFoundException;
 	Map<String, Integer> getWeeklySales(LocalDate checkIn, LocalDate checkOut) throws RecordNotFoundException;
-	Guesthouse getMostBookedGH(LocalDate checkIn, LocalDate checkOut) throws SQLException;
-	double calAverageVisitInterval(String clientId) throws SQLException;
-	Map<String, Double> calAverageStayByTier() throws DMLException, SQLException;
-	double calCancelRate() throws SQLException;
+	Guesthouse getMostBookedGH(LocalDate checkIn, LocalDate checkOut) throws RecordNotFoundException;
+	double calcAverageVisitInterval(String clientId) throws RecordNotFoundException;
+	Map<String, Double> calAverageStayByTier() throws DMLException;
+	double calCancelRate() throws RecordNotFoundException;
 	Client getClientById(String id) throws RecordNotFoundException;
-	ArrayList<Client> getAllClients() throws SQLException;
-	ArrayList<Booking> getBookings(String clientId) throws SQLException;
-	ArrayList<Booking> getAllBookings() throws SQLException;
-	String analzeTendencyByTier() throws SQLException;
+	ArrayList<Client> getAllClients() throws RecordNotFoundException;
+	ArrayList<Booking> getBookings(String clientId) throws RecordNotFoundException;
+	ArrayList<Booking> getAllBookings() throws RecordNotFoundException;
+	String analzeTendencyByTier() throws DMLException;
 	ArrayList<Guesthouse> recommendGH(int price, char mbti);
 	
 }
