@@ -6,6 +6,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -295,49 +296,94 @@ public class GHDAOImpl implements GHDAO {
 		}
 	}
 
+	private int calcTotalPrice(LocalDate checkIn, int nights, int weekdayPrice, int weekendPrice) {
+		int total = 0;
+		for (int i = 0; i < nights; i++) {
+			LocalDate current = checkIn.plusDays(i);
+			DayOfWeek day = current.getDayOfWeek();
+			if (day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY) {
+				total += weekendPrice;
+			} else {
+				total += weekdayPrice;
+			}
+		}
+		return total;
+	}
+	
+	@Override
+	public Guesthouse getGuesthouse(String ghName) throws SQLException {
+		Guesthouse gh = null;
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			conn = getConnect();
+			String query = "SELECT gh_name, mbti, price_weekday, price_weekend, max_capacity from guesthouse WHERE gh_name=?";
+			ps = conn.prepareStatement(query);
+			ps.setString(1, ghName);
+			rs = ps.executeQuery();
+			if (rs.next()) {
+				gh = new Guesthouse(rs.getString("gh_name"),
+									rs.getString("mbti").charAt(0),
+									rs.getInt("price_weekday"),
+									rs.getInt("price_weekend"),
+									rs.getInt("max_capacity"));
+			} else {
+				System.out.println("찾으시는 게스트 하우스가 없습니다.");
+			}
+		} finally {
+			closeAll(rs, ps, conn);
+		}
+		return gh;
+	}
+	
 	@Override
 	public void reserveBooking(Client client, Booking booking) throws SQLException {
 		Connection conn = null;
 		PreparedStatement ps = null;
-		if (checkId(client)) {
-			try {
-				String uuid = UUID.randomUUID().toString();
-				if (canBook(booking.getBookingId(), booking.getCheckInDate(), booking.getNights(),
-						booking.getPeopleCnt())) {
-					conn = getConnect();
-					String query = "INSERT INTO booking VALUES (?, ?, ?, ?, ?, ?, ?)";
-					ps = conn.prepareStatement(query);
-					ps.setString(1, uuid);
-					ps.setString(2, client.getId());
-					ps.setString(3, booking.getGhName());
-					ps.setInt(4, booking.getPeopleCnt());
-					ps.setString(5, booking.getCheckInDate().toString());
-					ps.setInt(6, booking.getNights());
-					if (client.getTier().equals('G'))
-						ps.setInt(7, (int) (booking.getTotalPrice() * 0.85));
-					else if (client.getTier().equals('S'))
-						ps.setInt(7, (int) (booking.getTotalPrice() * 0.9));
-					else if (client.getTier().equals('B'))
-						ps.setInt(7, (int) (booking.getTotalPrice() * 0.95));
-					else
-						ps.setInt(7, booking.getTotalPrice());
-					ps.executeUpdate();
-					conn = getConnect();
-					query = "INSERT INTO booking_detail (gh_name, booking_date, booking_status, booking_id) VALUES (?, ?, ?, ?)";
-					ps = conn.prepareStatement(query);
-					ps.setString(1, booking.getGhName());
-					ps.setString(2, booking.getCheckInDate().toString());
-					ps.setString(3, "R");
-					ps.setString(4, uuid);
-					System.out.println(ps.executeUpdate() + "개 예약 완료되었습니다.");
-				} else {
-					System.out.println("예약할 수 없습니다.");
+		try {
+			String uuid = UUID.randomUUID().toString();
+			booking.setBookingId(uuid);
+			if (canBook(booking.getBookingId(), booking.getCheckInDate(), booking.getNights(),
+					booking.getPeopleCnt())) {
+				Guesthouse gh = getGuesthouse(booking.getGhName());
+				if (gh == null) {
+					System.out.println("찾으시는 게스트하우스는 존재하지 않습니다.");
+					return ;
 				}
-			} finally {
-				closeAll(ps, conn);
+				int totalPrice = calcTotalPrice(booking.getCheckInDate(), booking.getNights(),
+												gh.getPriceWeekday(), gh.getPriceWeekend());
+				conn = getConnect();
+				String query = "INSERT INTO booking VALUES (?, ?, ?, ?, ?, ?, ?)";
+				ps = conn.prepareStatement(query);
+				ps.setString(1, uuid);
+				ps.setString(2, client.getId());
+				ps.setString(3, booking.getGhName());
+				ps.setInt(4, booking.getPeopleCnt());
+				ps.setString(5, booking.getCheckInDate().toString());
+				ps.setInt(6, booking.getNights());
+				if (client.getTier().equals('G'))
+					ps.setInt(7, (int)(totalPrice * 0.85));
+				else if (client.getTier().equals('S'))
+					ps.setInt(7, (int)(totalPrice * 0.9));
+				else if (client.getTier().equals('B'))
+					ps.setInt(7, (int)(totalPrice * 0.95));
+				else
+					ps.setInt(7, totalPrice);
+				ps.executeUpdate();
+				conn = getConnect();
+				query = "INSERT INTO booking_detail (gh_name, booking_date, booking_status, booking_id) VALUES (?, ?, ?, ?)";
+				ps = conn.prepareStatement(query);
+				ps.setString(1, booking.getGhName());
+				ps.setString(2, booking.getCheckInDate().toString());
+				ps.setString(3, "R");
+				ps.setString(4, uuid);
+				System.out.println(ps.executeUpdate() + "개 예약 완료되었습니다.");
+			} else {
+				System.out.println("예약할 수 없습니다.");
 			}
-		} else {
-			System.out.println("등록된 ID가 아닙니다.");
+		} finally {
+			closeAll(ps, conn);
 		}
 	}
 
@@ -467,28 +513,41 @@ public class GHDAOImpl implements GHDAO {
 		return availableList;
 	}
 
+
+	@Override
 	public void updateBooking(Client client, Booking booking) throws SQLException {
 		Connection conn = null;
 		PreparedStatement ps = null;
-		if (checkId(client)) {
+		if (client.getId().equals(checkId(booking.getBookingId()))) {
 			try {
-				if (canBook(booking.getGhName(), booking.getCheckInDate(), booking.getNights(),
-						booking.getPeopleCnt())) {
+				if (canBook(booking.getGhName(), booking.getCheckInDate(), booking.getNights(), booking.getPeopleCnt())) {
+					Guesthouse gh = getGuesthouse(booking.getGhName());
+					int totalPrice = calcTotalPrice(booking.getCheckInDate(), booking.getNights(),
+							gh.getPriceWeekday(), gh.getPriceWeekend());
 					conn = getConnect();
-					String query = "UPDATE booking SET check_in=?, people=?, nights=? WHERE booking_id=? AND client_id=?";
+					String query = "UPDATE booking SET check_in=?, people=?, nights=?, total_price=? WHERE booking_id=? AND client_id=?";
 					ps = conn.prepareStatement(query);
 					ps.setString(1, booking.getCheckInDate().toString());
 					ps.setInt(2, booking.getPeopleCnt());
 					ps.setInt(3, booking.getNights());
-					ps.setString(4, booking.getBookingId());
-					ps.setString(5, client.getId());
+					if (client.getTier().equals('G'))
+						ps.setInt(4, (int)(totalPrice * 0.85));
+					else if (client.getTier().equals('S'))
+						ps.setInt(4, (int)(totalPrice * 0.9));
+					else if (client.getTier().equals('B'))
+						ps.setInt(4, (int)(totalPrice * 0.95));
+					else
+						ps.setInt(4, totalPrice);
+					ps.setString(5, booking.getBookingId());
+					ps.setString(6, client.getId());
 					if (ps.executeUpdate() == 1) {
 						conn = getConnect();
-						query = "UPDATE booking_detail SET booking_date=?";
+						query = "UPDATE booking_detail SET booking_date=? WHERE booking_id =?";
 						ps = conn.prepareStatement(query);
 						ps.setString(1, booking.getCheckInDate().toString());
+						ps.setString(2, booking.getBookingId());
 						System.out.println(ps.executeUpdate() + "개 예약이 변경되었습니다.");
-					} else
+					} else 
 						System.out.println("변경하실 수 없습니다.");
 				} else {
 					System.out.println("변경할 수 없는 날짜입니다.");
@@ -496,8 +555,8 @@ public class GHDAOImpl implements GHDAO {
 			} finally {
 				closeAll(ps, conn);
 			}
-		} else
-			System.out.println("없는 사용자입니다.");
+		}else
+			System.out.println("잘못된 사용자입니다.");
 	}
 
 	@Override
@@ -512,7 +571,12 @@ public class GHDAOImpl implements GHDAO {
 					ps = conn.prepareStatement(query);
 					ps.setString(1, "C");
 					ps.setString(2, bookingId);
-					if (ps.executeUpdate() == 1) {
+					if(ps.executeUpdate() == 1) {
+						conn = getConnect();
+						query = "UPDATE booking SET total_price=0 WHERE booking_id=?";
+						ps = conn.prepareStatement(query);
+						ps.setString(1, bookingId);
+						ps.executeUpdate();
 						System.out.println("예약이 취소되었습니다.");
 					} else {
 						System.out.println("잘못된 입력입니다.");
@@ -679,38 +743,65 @@ public class GHDAOImpl implements GHDAO {
 	// 주별 매출 집계
 	@Override
 	public Map<String, Integer> getWeeklySales(LocalDate checkIn, LocalDate checkOut) throws SQLException {
-		Map<String, Integer> result = new LinkedHashMap<>();
+	    Map<String, Integer> result = new LinkedHashMap<>();
 
-		Connection conn = null;
-		PreparedStatement ps = null;
-		ResultSet rs = null;
+	    Connection conn = null;
+	    PreparedStatement ps = null;
+	    ResultSet rs = null;
 
-		try {
-			conn = getConnect();
-			String query = "SELECT YEAR(check_in) AS year, MONTH(check_in) AS month, WEEK(check_in, 1) AS week_num, "
-					+ "SUM(price) AS total_sales " + "FROM booking " + "WHERE check_in BETWEEN ? AND ? "
-					+ "GROUP BY year, month, week_num " + "ORDER BY year, month, week_num";
+	    try {
+	        conn = getConnect();
+	        
+	        // 1. gh 테이블에서 요금 정보 가져오기
+	        String ghquery = "SELECT gh_name, price_weekday, price_weekend FROM gh";
+	        ps = conn.prepareStatement(ghquery);
+	        rs = ps.executeQuery();
+	        
+	        Map<String, Integer> priceMap = new HashMap<>();
+	        while (rs.next()) {
+	            String ghName = rs.getString("gh_name");
+	            int price = rs.getInt("price_weekday") + rs.getInt("price_weekend");
+	            priceMap.put(ghName, price);
+	        }
+	        closeAll(rs, ps, null);
 
-			ps = conn.prepareStatement(query);
-			ps.setDate(1, java.sql.Date.valueOf(checkIn));
-			ps.setDate(2, java.sql.Date.valueOf(checkOut));
-			rs = ps.executeQuery();
+	        // 2. booking에서 주별, gh_name별 예약 인원 합계 계산
+	        String query =
+	            "SELECT " +
+	            " YEAR(check_in) AS year, " +
+	            " MONTH(check_in) AS month, " +
+	            " WEEK(check_in, 1) AS week_num, " +
+	            " gh_name, " +
+	            " SUM(people) AS total_people " +
+	            "FROM booking " + 
+	            "WHERE check_in BETWEEN ? AND ? " +
+	            "GROUP BY year, month, week_num, gh_name " +
+	            "ORDER BY year, month, week_num";
 
-			while (rs.next()) {
-				int year = rs.getInt("year");
-				int month = rs.getInt("month");
-				int week = rs.getInt("week_num");
-				int totalSales = rs.getInt("total_sales"); // 주별 총 매출
+	        ps = conn.prepareStatement(query);
+	        ps.setDate(1, java.sql.Date.valueOf(checkIn));
+	        ps.setDate(2, java.sql.Date.valueOf(checkOut));
+	        rs = ps.executeQuery();
 
-				String key = String.format("%d-%02d 주차 %d주차", year, month, week);
-				result.put(key, totalSales);
-			}
+	        while (rs.next()) {
+	            int year = rs.getInt("year");
+	            int month = rs.getInt("month");
+	            int week = rs.getInt("week_num");
+	            String ghName = rs.getString("gh_name");
+	            int people = rs.getInt("total_people");
+	            
+	            int price = priceMap.getOrDefault(ghName, 0);
+	            int sale = people * price;
+	            
+	            String key = String.format("%d년 %02d월 %d주차", year, month, week);
+	            result.put(key, result.getOrDefault(key, 0) + sale);
+	        }
 
-		} finally {
-			closeAll(rs, ps, conn);
-		}
+	    } finally {
+	        closeAll(rs, ps, conn);
+	    }
 
-		return result;
+	    return result;
 	}
 
 	@Override
@@ -811,9 +902,33 @@ public class GHDAOImpl implements GHDAO {
 	}
 
 	@Override
-	public double calAverageVisitInterval(Client client) {
-		// TODO Auto-generated method stub
-		return 0;
+	public double calAverageVisitInterval(Client client) throws SQLException {
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		double totalInterval = 0;
+		int count = 0;
+		try {
+			conn = getConnect();
+			String query = "SELECT booking_id, check_in, "
+					+ "DATEDIFF(check_in, LAG(check_in) OVER (PARTITION BY client_id ORDER BY check_in)) AS visit_interval "
+					+ "FROM booking " + "WHERE client_id = ? " + "ORDER BY check_in";
+			ps = conn.prepareStatement(query);
+			ps.setString(1, client.getId());
+			rs = ps.executeQuery();
+			while (rs.next()) {
+				int interval = rs.getInt("visit_interval");
+				if (!rs.wasNull()) {
+					totalInterval += interval;
+					count++;
+				}
+			}
+		} catch (SQLException e) {
+			e.getMessage();
+		} finally {
+			closeAll(rs, ps, conn);
+		}
+		return count > 0 ? totalInterval/count : 0;
 	}
 
 	@Override

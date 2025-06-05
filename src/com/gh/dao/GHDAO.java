@@ -22,13 +22,14 @@ public interface GHDAO {
 	void printMyInfo(Client c);
 	void cancelBooking(Client client, String bookingId) throws SQLException;
 	void updateBooking(Client client, Booking booking) throws SQLException;
+	Guesthouse getGuesthouse(String ghName) throws SQLException;
 	/*
 	 * Manager
 	 */
 	Map<String, Integer> getWeeklyVisitorCount(LocalDate checkIn, LocalDate checkOut) throws SQLException;
 	Map<String, Integer> getWeeklySales(LocalDate checkIn, LocalDate checkOut) throws SQLException;
 	Guesthouse getMostBookedGH(LocalDate checkIn, LocalDate checkOut) throws SQLException;
-	double calAverageVisitInterval(Client client);
+	double calAverageVisitInterval(Client client) throws SQLException;
 	Map<String, Double> calAverageStayByTier() throws DMLException, SQLException;
 	double calCancelRate() throws SQLException;
 	Client getClientById(String id) throws SQLException;
