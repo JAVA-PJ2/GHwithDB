@@ -279,7 +279,14 @@ public class GHDAOImpl implements GHDAO {
 					ps.setInt(4, booking.getPeopleCnt());
 					ps.setString(5, booking.getCheckInDate().toString());
 					ps.setInt(6, booking.getNights());
-					ps.setInt(7, booking.getTotalPrice());
+					if (client.getTier().equals('G'))
+						ps.setInt(7, (int)(booking.getTotalPrice() * 0.85));
+					else if (client.getTier().equals('S'))
+						ps.setInt(7, (int)(booking.getTotalPrice() * 0.9));
+					else if (client.getTier().equals('B'))
+						ps.setInt(7, (int)(booking.getTotalPrice() * 0.95));
+					else
+						ps.setInt(7, booking.getTotalPrice());
 					ps.executeUpdate();
 					conn = getConnect();
 					query = "INSERT INTO booking_detail (gh_name, booking_date, booking_status, booking_id) VALUES (?, ?, ?, ?)";
