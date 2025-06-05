@@ -4,6 +4,7 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -336,6 +337,11 @@ public class GHDAOTest {
 					case "6":
 						System.out.println("티어별 평균 숙박일수 호출됨\n");
 						
+						try {
+							dao.calAverageStayByTier();
+						} catch (Exception e) {
+							System.out.println(e.getMessage());
+						}
 						break;
 					case "7":
 						System.out.println("취소율 계산 호출됨\n");
@@ -348,6 +354,28 @@ public class GHDAOTest {
 					case "9":
 						System.out.println("전체 사용자 조회 호출됨\n");
 						
+						   try {
+						        ArrayList<Client> clients = dao.getAllClients();
+						        if (clients.isEmpty()) {
+						            System.out.println("등록된 사용자가 없습니다.");
+						        } else {
+						            for (Client client : clients) {
+						                System.out.printf("ID: %s | 이름: %s | MBTI: %s | 등급: %s | 예약 수: %d\n",
+						                		client.getId(), client.getName(), client.getMbti(), client.getTier(), client.getBookings() != null ? client.getBookings().size() : 0);
+						                if (client.getBookings() != null) {
+						                    for (Booking b : client.getBookings()) {
+						                        System.out.printf("  - 예약ID: %s | 게스트하우스: %s | 인원: %d | 체크인: %s | 숙박일수: %d | 가격: %,d원\n",
+						                            b.getBookingId(), b.getGhName(), b.getPeopleCnt(), b.getCheckInDate(),
+						                            b.getNights(), b.getTotalPrice());
+						                    }
+						                }
+						                System.out.println("------------------------------------------------------");
+						            }
+						        }
+						    } catch (SQLException e) {
+						        System.out.println("오류 발생: " + e.getMessage());
+						        e.printStackTrace();
+						    }
 						break;
 					case "10":
 						System.out.println("전체 예약 조회 호출됨\n");
