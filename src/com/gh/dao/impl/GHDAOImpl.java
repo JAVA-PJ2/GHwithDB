@@ -842,15 +842,85 @@ Map<String, Double> result = new LinkedHashMap<>();
 	}
 
 	@Override
-	public double calCancelRate() {
-		// TODO Auto-generated method stub
-		return 0;
+	public double calCancelRate() throws SQLException {
+	    Connection conn = null;
+	    PreparedStatement ps = null;
+	    ResultSet rs = null;
+	    double cancellationRate = 0.0;
+	    
+	    try {
+	        conn = getConnect();
+	        
+	        // 1️. 전체 예약 수
+	        String totalQuery = "SELECT COUNT(*) FROM booking_detail";
+	        ps = conn.prepareStatement(totalQuery);
+	        rs = ps.executeQuery();
+	        int totalBookings = 0;
+	        if (rs.next()) {
+	            totalBookings = rs.getInt(1);
+	        }
+	        rs.close();
+	        ps.close();
+	        
+	        if (totalBookings == 0) {
+	            // 예약이 없는 경우 취소율은 0
+	            return 0.0;
+	        }
+	        
+	        // 2️.취소된 예약 수
+	        String canceledQuery = "SELECT COUNT(*) FROM booking_detail WHERE booking_status='C'";
+	        ps = conn.prepareStatement(canceledQuery);
+	        rs = ps.executeQuery();
+	        int canceledBookings = 0;
+	        if (rs.next()) {
+	            canceledBookings = rs.getInt(1);
+	        }
+	        
+	        // 3️. 취소율 계산
+	        cancellationRate = (canceledBookings / (double) totalBookings) * 100.0;
+	        
+	    } finally {
+	        closeAll(rs, ps, conn);
+	    }
+	    
+	    return cancellationRate;
 	}
 
 	@Override
-	public Client getClientById(String id) {
-		// TODO Auto-generated method stub
-		return null;
+	public Client getClientById(String id) throws SQLException {
+	    Connection conn = null;
+	    PreparedStatement ps = null;
+	    ResultSet rs = null;
+	    Client cl = null;
+
+	    try {
+	        conn = getConnect();
+	        String query = "SELECT client_id, client_password, client_name, mbti, tier FROM customer WHERE client_id=?";
+	        ps = conn.prepareStatement(query);
+	        ps.setString(1, id);
+
+	        rs = ps.executeQuery();
+	        if (rs.next()) {
+	            String clientId = rs.getString("client_id");
+	            String mbtiStr = rs.getString("mbti");
+	            char mbti = (mbtiStr != null && !mbtiStr.isEmpty()) ? mbtiStr.charAt(0) : ' ';
+
+	            String tierStr = rs.getString("tier");
+	            Character tier = (tierStr != null && !tierStr.isEmpty()) ? tierStr.charAt(0) : null;
+
+	            cl = new Client(
+	                clientId,
+	                rs.getString("client_password"),
+	                rs.getString("client_name"),
+	                mbti,
+	                tier,
+	                getBookings(clientId));
+	        }
+
+	    } finally {
+	        closeAll(rs, ps, conn);
+	    }
+	    return cl;
 	}
 
 	private HashMap<String, ArrayList<Booking>> groupedBookingsByClient() throws SQLException {
