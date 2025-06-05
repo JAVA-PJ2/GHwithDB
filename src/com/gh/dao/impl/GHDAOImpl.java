@@ -893,9 +893,40 @@ Map<String, Double> result = new LinkedHashMap<>();
 	}
 
 	@Override
-	public Client getClientById(String id) {
-		// TODO Auto-generated method stub
-		return null;
+	public Client getClientById(String id) throws SQLException {
+	    Connection conn = null;
+	    PreparedStatement ps = null;
+	    ResultSet rs = null;
+	    Client cl = null;
+
+	    try {
+	        conn = getConnect();
+	        String query = "SELECT client_id, client_password, client_name, mbti, tier FROM customer WHERE client_id=?";
+	        ps = conn.prepareStatement(query);
+	        ps.setString(1, id);
+
+	        rs = ps.executeQuery();
+	        if (rs.next()) {
+	            String clientId = rs.getString("client_id");
+	            String mbtiStr = rs.getString("mbti");
+	            char mbti = (mbtiStr != null && !mbtiStr.isEmpty()) ? mbtiStr.charAt(0) : ' ';
+
+	            String tierStr = rs.getString("tier");
+	            Character tier = (tierStr != null && !tierStr.isEmpty()) ? tierStr.charAt(0) : null;
+
+	            cl = new Client(
+	                clientId,
+	                rs.getString("client_password"),
+	                rs.getString("client_name"),
+	                mbti,
+	                tier,
+	                getBookings(clientId));
+	        }
+
+	    } finally {
+	        closeAll(rs, ps, conn);
+	    }
+	    return cl;
 	}
 
 	private HashMap<String, ArrayList<Booking>> groupedBookingsByClient() throws SQLException {
