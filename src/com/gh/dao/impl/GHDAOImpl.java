@@ -791,10 +791,13 @@ public class GHDAOImpl implements GHDAO {
 			conn = getConnect();
 
 			// 주별 방문 고객 수 집계
-			String query = "SELECT DISTINCT " + " YEAR(check_in) AS year, " + " MONTH(check_in) AS month, "
-					+ " WEEK(check_in, 1) AS week_num, "
-					+ " COUNT(client_id) OVER (PARTITION BY YEAR(check_in), MONTH(check_in), WEEK(check_in, 1)) AS visitor_count "
-					+ "FROM booking " + "WHERE check_in BETWEEN ? AND ? " + "ORDER BY year, month, week_num";
+			String query = 
+		            "SELECT " +
+		            " check_in, " +
+		            " COUNT(client_id) OVER (PARTITION BY YEAR(check_in), MONTH(check_in), WEEK(check_in, 1)) AS visitor_count " +
+		            "FROM booking " +
+		            "WHERE check_in BETWEEN ? AND ? " +
+		            "ORDER BY check_in";
 
 			ps = conn.prepareStatement(query);
 			ps.setDate(1, java.sql.Date.valueOf(checkIn));
@@ -802,13 +805,14 @@ public class GHDAOImpl implements GHDAO {
 			rs = ps.executeQuery();
 
 			while (rs.next()) {
-				int year = rs.getInt("year");
-				int month = rs.getInt("month");
-				int week = rs.getInt("week_num");
-				int count = rs.getInt("visitor_count");
+				LocalDate visitDate = rs.getDate("check_in").toLocalDate();
+	            int year = visitDate.getYear();
+	            int month = visitDate.getMonthValue();
+	            int relativeWeek = (int) ChronoUnit.WEEKS.between(checkIn, visitDate) + 1;
+	            int count = rs.getInt("visitor_count");
 
-				String key = String.format("%d년 %02d월 %d주차", year, month, week);
-				result.put(key, count);
+	            String key = String.format("%d년 %02d월 %d주차", year, month, relativeWeek);
+	            result.put(key, count);
 			}
 
 		} finally {
@@ -821,7 +825,7 @@ public class GHDAOImpl implements GHDAO {
 	// 주별 매출 집계
 	@Override
 	public Map<String, Integer> getWeeklySales(LocalDate checkIn, LocalDate checkOut) throws SQLException {
-	    Map<String, Integer> result = new LinkedHashMap<>();
+		Map<String, Integer> result = new LinkedHashMap<>();
 
 	    Connection conn = null;
 	    PreparedStatement ps = null;
@@ -831,7 +835,7 @@ public class GHDAOImpl implements GHDAO {
 	        conn = getConnect();
 	        
 	        // 1. gh 테이블에서 요금 정보 가져오기
-	        String ghquery = "SELECT gh_name, price_weekday, price_weekend FROM guesthouse";
+	        String ghquery = "SELECT gh_name, price_weekday, price_weekend FROM gh";
 	        ps = conn.prepareStatement(ghquery);
 	        rs = ps.executeQuery();
 	        
@@ -845,16 +849,14 @@ public class GHDAOImpl implements GHDAO {
 
 	        // 2. booking에서 주별, gh_name별 예약 인원 합계 계산
 	        String query =
-	            "SELECT " +
-	            " YEAR(check_in) AS year, " +
-	            " MONTH(check_in) AS month, " +
-	            " WEEK(check_in, 1) AS week_num, " +
-	            " gh_name, " +
-	            " SUM(people) AS total_people " +
-	            "FROM booking " + 
-	            "WHERE check_in BETWEEN ? AND ? " +
-	            "GROUP BY year, month, week_num, gh_name " +
-	            "ORDER BY year, month, week_num";
+	                "SELECT " +
+	                " check_in, " +
+	                " gh_name, " +
+	                " SUM(people) AS total_people " +
+	                "FROM booking " + 
+	                "WHERE check_in BETWEEN ? AND ? " +
+	                "GROUP BY gh_name, check_in " +
+	                "ORDER BY check_in";
 
 	        ps = conn.prepareStatement(query);
 	        ps.setDate(1, java.sql.Date.valueOf(checkIn));
@@ -862,16 +864,17 @@ public class GHDAOImpl implements GHDAO {
 	        rs = ps.executeQuery();
 
 	        while (rs.next()) {
-	            int year = rs.getInt("year");
-	            int month = rs.getInt("month");
-	            int week = rs.getInt("week_num");
+	        	LocalDate visitDate = rs.getDate("check_in").toLocalDate();
+	            int year = visitDate.getYear();
+	            int month = visitDate.getMonthValue();
+	            int relativeWeek = (int) ChronoUnit.WEEKS.between(checkIn, visitDate) + 1;
+
 	            String ghName = rs.getString("gh_name");
 	            int people = rs.getInt("total_people");
-	            
 	            int price = priceMap.getOrDefault(ghName, 0);
 	            int sale = people * price;
-	            
-	            String key = String.format("%d년 %02d월 %d주차", year, month, week);
+
+	            String key = String.format("%d년 %02d월 %d주차", year, month, relativeWeek);
 	            result.put(key, result.getOrDefault(key, 0) + sale);
 	        }
 
