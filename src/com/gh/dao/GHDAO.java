@@ -17,7 +17,7 @@ public interface GHDAO {
 	/*
 	 * Client
 	 */
-	void login(String id, String password, String type) throws RecordNotFoundException;
+	boolean login(String id, String password, String type) throws RecordNotFoundException;
 	Client login(String id, String password) throws RecordNotFoundException;
 	void reserveBooking(Client client, Booking booking) throws BookCancelledException, RecordNotFoundException;
 	ArrayList<Guesthouse> searchAvailableGH(LocalDate checkIn, int night, int peopleCnt) throws RecordNotFoundException;

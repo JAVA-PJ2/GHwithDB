@@ -15,6 +15,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.gh.dao.InsertDummyData;
 import com.gh.dao.impl.GHDAOImpl;
+import com.gh.exception.RecordNotFoundException;
 import com.gh.vo.Booking;
 import com.gh.vo.Client;
 import com.gh.vo.Guesthouse;
@@ -74,7 +75,6 @@ public class GHDAOTest {
 			} catch (Exception e) {
 				if (!Thread.currentThread().isInterrupted()) {
 					System.out.println("조회 중 오류 발생: " + e.getMessage());
-					e.printStackTrace();
 				}
 			}
 		};
@@ -141,11 +141,13 @@ public class GHDAOTest {
 						}
 					} else if (type.equals("manager")) {
 						// Manager용 로그인 처리
-						dao.login(userId, password, "manager"); // 반환값 없음
-						success = true;
+						boolean status = dao.login(userId, password, "manager"); // 반환값 없음
+						if(status) {
+							success = true;		
+						}
 					}
 
-				} catch (SQLException e) {
+				} catch (Exception e) {
 					System.out.println("로그인 오류: " + e.getMessage());
 					e.printStackTrace();
 				}
@@ -176,7 +178,7 @@ public class GHDAOTest {
 
 						try {
 							dao.reserveBooking(c, booking);
-						} catch (SQLException e) {
+						} catch (Exception e) {
 							System.out.println(e.getMessage());
 						}
 						break;
@@ -186,7 +188,7 @@ public class GHDAOTest {
 								LocalDate.of(2025, 06, 5), 3, 17000);
 						try {
 							dao.updateBooking(c, b);
-						} catch (SQLException e) {
+						} catch (Exception e) {
 							System.out.println(e.getMessage());
 						}
 						break;
@@ -195,7 +197,7 @@ public class GHDAOTest {
 
 						try {
 							dao.cancelBooking(c, "8b971ff7-84ee-4644-823d-4ee34e8339c5");
-						} catch (SQLException e) {
+						} catch (Exception e) {
 							System.out.println(e.getMessage());
 						}
 						break;
@@ -211,7 +213,11 @@ public class GHDAOTest {
 						break;
 					case "6":
 						System.out.println("내 정보 보기 호출됨\n");
-						dao.printMyInfo(c);
+						try {
+							dao.printMyInfo(c);
+						} catch (Exception e) {
+							System.out.println(e.getMessage());
+						}
 						break;
 					case "0":
 						System.out.println("로그아웃합니다.");
@@ -261,7 +267,7 @@ public class GHDAOTest {
 								}
 							}
 
-						} catch (SQLException e) {
+						} catch (Exception e) {
 							System.out.println("DB 오류: " + e.getMessage());
 							e.printStackTrace();
 						}
@@ -284,7 +290,7 @@ public class GHDAOTest {
 								}
 							}
 
-						} catch (SQLException e) {
+						} catch (Exception e) {
 							System.out.println(e.getMessage());
 						}
 						break;

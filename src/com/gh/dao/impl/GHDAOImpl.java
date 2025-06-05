@@ -207,39 +207,48 @@ public class GHDAOImpl implements GHDAO {
 	// 사용 방법 : 0보다 작으면(-1) 이전에 방문한 기록이 없습니다, 크면 getDayBetweenBooking()일만에 예약하셧습니다 하면
 	// 됩니다
 
+
 	@Override
-	public void login(String id, String password, String type) throws RecordNotFoundException {
-		String query = null;
-		String column = null;
-		if ("client".equalsIgnoreCase(type)) {
-			query = "SELECT client_password FROM client WHERE client_id=?";
-			column = "client_password";
-		} else if ("manager".equalsIgnoreCase(type)) {
-			query = "SELECT manager_password FROM manager WHERE manager_id=?";
-			column = "manager_password";
-		} else {
-			System.out.println("유효하지 않은 사용자 유형입니다 (client 또는 manager)");
-			return;
-		}
-		try (Connection conn = getConnect();PreparedStatement ps = conn.prepareStatement(query);) {
-			ps.setString(1, id);
-			try (ResultSet rs = ps.executeQuery();) {
-				if (rs.next()) {
-					String storedHash = rs.getString(column);
-					String inputHash = PasswordUtil.encrypt(password);
-	
-					if (storedHash.equalsIgnoreCase(inputHash))
-						System.out.println(id + "님 로그인 성공 ! ");
-					else
-						System.out.println("비밀번호가 일치하지 않습니다.");
-				} else {
-					System.out.println("해당 ID는 존재하지 않습니다.");
-				}
-			}
-		}catch (SQLException e) {
-			throw new RecordNotFoundException("올바른 사용자가 아닙니다.");
-		}
+	public boolean login(String id, String password, String type) throws RecordNotFoundException {
+	    String query = null;
+	    String column = null;
+
+	    if ("client".equalsIgnoreCase(type)) {
+	        query = "SELECT client_password FROM client WHERE client_id=?";
+	        column = "client_password";
+	    } else if ("manager".equalsIgnoreCase(type)) {
+	        query = "SELECT manager_password FROM manager WHERE manager_id=?";
+	        column = "manager_password";
+	    } else {
+	        System.out.println("유효하지 않은 사용자 유형입니다 (client 또는 manager)");
+	        return false;
+	    }
+
+	    try (Connection conn = getConnect(); PreparedStatement ps = conn.prepareStatement(query)) {
+	        ps.setString(1, id);
+
+	        try (ResultSet rs = ps.executeQuery()) {
+	            if (rs.next()) {
+	                String storedHash = rs.getString(column);
+	                String inputHash = PasswordUtil.encrypt(password);
+
+	                if (storedHash.equalsIgnoreCase(inputHash)) {
+	                    System.out.println(id + "님 로그인 성공 ! ");
+	                    return true;
+	                } else {
+	                    System.out.println("비밀번호가 일치하지 않습니다.");
+	                    return false;
+	                }
+	            } else {
+	                System.out.println("해당 ID는 존재하지 않습니다.");
+	                return false;
+	            }
+	        }
+	    } catch (SQLException e) {
+	        throw new RecordNotFoundException("로그인 중 오류 발생: " + e.getMessage());
+	    }
 	}
+
 	
 	public ArrayList<Booking> getBookingsByClientId(String clientId) throws SQLException {
 	    Connection conn = null;
@@ -303,7 +312,7 @@ public class GHDAOImpl implements GHDAO {
 		            System.out.println("해당 ID는 존재하지 않습니다.");
 		        }
 	        }
-	    }catch (SQLException e) {
+	    } catch (SQLException e) {
 	    	throw new RecordNotFoundException("가입되지 않은 사용자입니다.");
 	    }
 	    return null;
