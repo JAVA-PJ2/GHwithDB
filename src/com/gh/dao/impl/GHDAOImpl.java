@@ -858,7 +858,7 @@ Map<String, Double> result = new LinkedHashMap<>();
 		if (allBookings.size() == 0) return map;
 		String clientId = null;
 		for (Booking b : allBookings) {
-			if (b.getClientId() != clientId) {
+			if (!b.getClientId().equals(clientId)) {
 				clientId = b.getClientId();
 				map.put(clientId ,new ArrayList<Booking>());
 			}
