@@ -1,6 +1,7 @@
 package com.gh.test;
 
 import java.sql.SQLException;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -11,92 +12,25 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import com.gh.dao.InsertDummyData;
 import com.gh.dao.impl.GHDAOImpl;
 import com.gh.vo.Guesthouse;
 
 public class GHDAOTest {
+
 	public static void main(String[] args) {
+
 		GHDAOImpl dao = GHDAOImpl.getInstance();
 		Scanner sc = new Scanner(System.in);
 
-//        // 사용자 더미 데이터 추가
-//        try {
-//            InsertDummyData inserter = new InsertDummyData();
-//            inserter.insertDummyClients(); // 더미 데이터 삽입 실행
-//        } catch (Exception e) {
-//            System.out.println("데이터 삽입 중 오류 발생: " + e.getMessage());
-//            e.printStackTrace();
-//        }
-//        
-//        // 매니저 더미 데이터 추가
-//        try {
-//          InsertDummyData inserter = new InsertDummyData();
-//          inserter.insertDummyManagers(); // 더미 데이터 삽입 실행
-//      } catch (Exception e) {
-//          System.out.println("데이터 삽입 중 오류 발생: " + e.getMessage());
-//          e.printStackTrace();
-//      }
-
-		while (true) {
-			System.out.println("=========== 로그인 메뉴 ===========");
-			System.out.println("1. 사용자 로그인  2. 관리자 로그인  3. 종료");
-			System.out.print("선택 :");
-			String choice = sc.nextLine();
-
-			if (choice.equals("3")) {
-				System.out.println("프로그램을 종료합니다.");
-				break;
-			}
-
-			String type = null;
-
-			if (choice.equals("1")) {
-				type = "client";
-			} else if (choice.equals("2")) {
-				type = "manager";
-			} else {
-				System.out.println("올바른 메뉴를 선택하세요.");
-				continue;
-			}
-
-			boolean success = false;
-			while (!success) {
-				try {
-					System.out.print("아이디 입력: ");
-					String id = sc.nextLine();
-
-					System.out.print("비밀번호 입력: ");
-					String password = sc.nextLine();
-
-					// 로그인 시도
-					dao.login(id, password, type);
-
-					// 로그인 성공 시 success 플래그 변경
-					success = true;
-				} catch (SQLException e) {
-					System.out.println(e.getMessage());
-					e.printStackTrace();
-				}
-			}
-
-		}
-
-		// 검색 조회 (실시간)
+		// 해당 메소드 외부에 선언 또는 main() 위쪽에 선언
 		LocalDate checkIn = LocalDate.of(2025, 6, 5);
 		int nights = 2;
 		int peopleCnt = 2;
 		int maxPrice = 8000;
 		char mbti = 'E';
 
-		ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-		ScheduledFuture<?> runningTask = null;
-
 		Runnable simpleTask = () -> {
 			try {
-				if (Thread.currentThread().isInterrupted())
-					return;
-
 				List<Guesthouse> list = dao.searchAvailableGH(checkIn, nights, peopleCnt);
 				DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy년 MM월 dd일 HH시 mm분 ss초");
 				System.out.println("=== [전체 조회 결과 - " + LocalDateTime.now().format(formatter) + "] ===");
@@ -120,9 +54,6 @@ public class GHDAOTest {
 
 		Runnable conditionTask = () -> {
 			try {
-				if (Thread.currentThread().isInterrupted())
-					return;
-
 				List<Guesthouse> list = dao.searchAvailableGH(checkIn, nights, peopleCnt, maxPrice, mbti);
 				DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy년 MM월 dd일 HH시 mm분 ss초");
 				System.out.println("=== [조건 조회 결과 - " + LocalDateTime.now().format(formatter) + "] ===");
@@ -144,32 +75,195 @@ public class GHDAOTest {
 			}
 		};
 
-		System.out.println("1: 전체 조회 / 2: 조건 조회 / q: 종료");
+//        // 사용자 더미 데이터 추가
+//        try {
+//            InsertDummyData inserter = new InsertDummyData();
+//            inserter.insertDummyClients(); // 더미 데이터 삽입 실행
+//        } catch (Exception e) {
+//            System.out.println("데이터 삽입 중 오류 발생: " + e.getMessage());
+//            e.printStackTrace();
+//        }
+//        
+//        // 매니저 더미 데이터 추가
+//        try {
+//          InsertDummyData inserter = new InsertDummyData();
+//          inserter.insertDummyManagers(); // 더미 데이터 삽입 실행
+//      } catch (Exception e) {
+//          System.out.println("데이터 삽입 중 오류 발생: " + e.getMessage());
+//          e.printStackTrace();
+//      }
 
 		while (true) {
+			System.out.println("=========== 로그인 메뉴 ===========");
+			System.out.println("1. 사용자 로그인  2. 관리자 로그인  3. 종료");
+			System.out.print("선택 : ");
+			String choice = sc.nextLine();
+
+			if (choice.equals("3")) {
+				System.out.println("프로그램을 종료합니다.");
+				break;
+			}
+
+			String type = null;
+
+			if (choice.equals("1")) {
+				type = "client";
+			} else if (choice.equals("2")) {
+				type = "manager";
+			} else {
+				System.out.println("올바른 메뉴를 선택하세요.");
+				continue;
+			}
+
+			boolean success = false;
+			String userId = null;
+
+			while (!success) {
+				try {
+					System.out.print("아이디 입력: ");
+					userId = sc.nextLine();
+
+					System.out.print("비밀번호 입력: ");
+					String password = sc.nextLine();
+
+					// 로그인 시도
+					dao.login(userId, password, type);
+					success = true;
+
+				} catch (SQLException e) {
+					System.out.println("로그인 오류: " + e.getMessage());
+					e.printStackTrace();
+				}
+			}
+
+			// 로그인 성공 시 선택 메뉴
+			// 유저일 경우 - 유저 관련 메소드
+			if ("client".equals(type)) {
+				while (true) {
+					ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+					ScheduledFuture<?> runningTask = null;
+
+					System.out.println("===== 사용자 메뉴 =====");
+					System.out.println("1. 예약하기");
+					System.out.println("2. 예약 수정");
+					System.out.println("3. 예약 취소");
+					System.out.println("4. 예약 가능 게스트하우스 조회");
+					System.out.println("5. 예약 가능 게스트하우스 조회");
+					System.out.println("6. 내 정보 보기");
+					System.out.println("0. 로그아웃");
+					System.out.print("선택 : ");
+					String clientChoice = sc.nextLine();
+
+					switch (clientChoice) {
+					case "1":
+						// dao.reserveBooking(userId); // 이런식으로 호출해서 사용하면 되고 여기서 테스트 코드 구현하면 댐.
+						System.out.println("예약하기 호출됨");
+						break;
+					case "2":
+						System.out.println("예약 수정 호출됨");
+						break;
+					case "3":
+						System.out.println("예약 취소 호출됨");
+						break;
+					case "4":
+						System.out.println("실시간 전체 조회 시작 (q 입력 시 종료)");
+						runningTask = scheduler.scheduleAtFixedRate(simpleTask, 0, 10, TimeUnit.SECONDS);
+						waitForQuit(sc, scheduler, runningTask);
+						break;
+					case "5":
+						System.out.println("실시간 조건 조회 시작 (q 입력 시 종료)");
+						runningTask = scheduler.scheduleAtFixedRate(conditionTask, 0, 10, TimeUnit.SECONDS);
+						waitForQuit(sc, scheduler, runningTask);
+						break;
+					case "6":
+						System.out.println("내 정보 보기 호출됨");
+						break;
+					case "0":
+						System.out.println("로그아웃합니다.");
+						break;
+					default:
+						System.out.println("올바른 번호를 선택하세요.");
+
+					}
+
+					if (clientChoice.equals("0"))
+						break;
+				}
+
+			} else if ("manager".equals(type)) {
+				while (true) {
+					System.out.println("===== 관리자 메뉴 =====");
+					System.out.println("1. 주간 방문자 수");
+					System.out.println("2. 주간 매출");
+					System.out.println("3. 최다 예약 게스트하우스");
+					System.out.println("4. 티어별 성향 분석");
+					System.out.println("5. 평균 방문 주기");
+					System.out.println("6. 티어별 평균 숙박일수");
+					System.out.println("7. 취소율 계산");
+					System.out.println("8. 아이디로 사용자 조회");
+					System.out.println("9. 전체 사용자 조회");
+					System.out.println("10. 전체 예약 조회");
+					System.out.println("0. 로그아웃");
+					System.out.print("선택 : ");
+					String managerChoice = sc.nextLine();
+
+					switch (managerChoice) {
+					case "1":
+						System.out.println("주간 방문자 수 호출됨");
+						break;
+					case "2":
+						System.out.println("주간 매출 호출됨");
+						break;
+					case "3":
+						System.out.println("최다 예약 게스트하우스 호출됨");
+						break;
+					case "4":
+						System.out.println("티어별 성향 분석 호출됨");
+						break;
+					case "5":
+						System.out.println("평균 방문 주기 호출됨");
+						break;
+					case "6":
+						System.out.println("티어별 평균 숙박일수 호출됨");
+						break;
+					case "7":
+						System.out.println("취소율 계산 호출됨");
+						break;
+					case "8":
+						System.out.println("아이디로 사용자 조회 호출됨");
+						break;
+					case "9":
+						System.out.println("전체 사용자 조회 호출됨");
+						break;
+					case "10":
+						System.out.println("전체 예약 조회 호출됨");
+						break;
+					case "0":
+						System.out.println("로그아웃합니다.");
+						break;
+					default:
+						System.out.println("올바른 번호를 선택하세요.");
+					}
+
+					if (managerChoice.equals("0"))
+						break;
+				}
+			}
+		}
+
+		sc.close();
+	}
+
+	private static void waitForQuit(Scanner sc, ScheduledExecutorService scheduler, ScheduledFuture<?> task) {
+		while (true) {
 			String input = sc.nextLine();
-
-			if (input.equals("1")) {
-				if (runningTask != null && !runningTask.isCancelled()) {
-					runningTask.cancel(true);
-				}
-				runningTask = scheduler.scheduleAtFixedRate(simpleTask, 0, 10, TimeUnit.SECONDS);
-
-			} else if (input.equals("2")) {
-				if (runningTask != null && !runningTask.isCancelled()) {
-					runningTask.cancel(true);
-				}
-				runningTask = scheduler.scheduleAtFixedRate(conditionTask, 0, 10, TimeUnit.SECONDS);
-
-			} else if (input.equalsIgnoreCase("q")) {
+			if (input.equalsIgnoreCase("q")) {
 				System.out.println("스케줄러 종료 중...");
-				if (runningTask != null) {
-					runningTask.cancel(true);
-				}
+				if (task != null)
+					task.cancel(true);
 				scheduler.shutdown();
 				try {
 					if (!scheduler.awaitTermination(5, TimeUnit.SECONDS)) {
-						System.out.println("5초 내 종료 실패. 강제 종료.");
 						scheduler.shutdownNow();
 					}
 				} catch (InterruptedException e) {
@@ -180,7 +274,5 @@ public class GHDAOTest {
 				break;
 			}
 		}
-
-		sc.close();
 	}
 }
