@@ -883,7 +883,7 @@ public class GHDAOImpl implements GHDAO {
 	}
 
 	@Override
-	public String analzeTendencyByTier(Client c) throws SQLException {
+	public String analzeTendencyByTier() throws SQLException {
 		Connection conn = null;
 		PreparedStatement ps = null;
 		PreparedStatement psTier = null;
@@ -980,7 +980,7 @@ public class GHDAOImpl implements GHDAO {
 	}
 
 	@Override
-	public double calAverageVisitInterval(Client client) throws SQLException {
+	public double calAverageVisitInterval(String clientId) throws SQLException {
 		Connection conn = null;
 		PreparedStatement ps = null;
 		ResultSet rs = null;
@@ -992,7 +992,7 @@ public class GHDAOImpl implements GHDAO {
 					+ "DATEDIFF(check_in, LAG(check_in) OVER (PARTITION BY client_id ORDER BY check_in)) AS visit_interval "
 					+ "FROM booking " + "WHERE client_id = ? " + "ORDER BY check_in";
 			ps = conn.prepareStatement(query);
-			ps.setString(1, client.getId());
+			ps.setString(1, clientId);
 			rs = ps.executeQuery();
 			while (rs.next()) {
 				int interval = rs.getInt("visit_interval");

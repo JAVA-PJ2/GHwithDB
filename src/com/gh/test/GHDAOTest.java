@@ -169,7 +169,7 @@ public class GHDAOTest {
 
 					switch (clientChoice) {
 					case "1":
-						System.out.println("예약하기 호출됨");
+						System.out.println("예약하기 호출됨\n");
 						Booking booking = new Booking(c.getId(), "힐링하우스", 2, LocalDate.of(2025, 06, 5), 3);
 
 						try {
@@ -179,7 +179,7 @@ public class GHDAOTest {
 						}
 						break;
 					case "2":
-						System.out.println("예약 수정 호출됨");
+						System.out.println("예약 수정 호출됨\n");
 						Booking b = new Booking("7bc43af7-8c8a-47a7-9aa0-7b0b7ce7e06e", c.getId(), "힐링하우스", 1,
 								LocalDate.of(2025, 06, 5), 3, 17000);
 						try {
@@ -189,7 +189,7 @@ public class GHDAOTest {
 						}
 						break;
 					case "3":
-						System.out.println("예약 취소 호출됨");
+						System.out.println("예약 취소 호출됨\n");
 
 						try {
 							dao.cancelBooking(c, "7bc43af7-8c8a-47a7-9aa0-7b0b7ce7e06e");
@@ -208,7 +208,7 @@ public class GHDAOTest {
 						waitForQuit(sc, scheduler, runningTask);
 						break;
 					case "6":
-						System.out.println("내 정보 보기 호출됨");
+						System.out.println("내 정보 보기 호출됨\n");
 						dao.printMyInfo(c);
 						break;
 					case "0":
@@ -287,28 +287,71 @@ public class GHDAOTest {
 						}
 						break;
 					case "3":
-						System.out.println("최다 예약 게스트하우스 호출됨");
+						System.out.println("최다 예약 게스트하우스 호출됨\n");
+
+						try {
+							LocalDate start = LocalDate.of(2025, 6, 1);
+							LocalDate end = LocalDate.of(2025, 6, 30);
+
+							Guesthouse mostBooked = dao.getMostBookedGH(start, end);
+
+							if (mostBooked != null) {
+								System.out.println("=== 2025년 6월 최다 예약 게스트하우스 ===");
+								System.out.printf("이름: %s, MBTI: %s, 주중가격: %,d원, 주말가격: %,d원, 최대수용인원: %d명\n\n",
+										mostBooked.getName(), mostBooked.getMbti(), mostBooked.getPriceWeekday(),
+										mostBooked.getPriceWeekend(), mostBooked.getMaxCapacity());
+							}
+						} catch (SQLException e) {
+							System.out.println("오류: " + e.getMessage());
+							e.printStackTrace();
+						}
 						break;
 					case "4":
-						System.out.println("티어별 성향 분석 호출됨");
+						System.out.println("티어별 성향 분석 호출됨\n");
+
+						try {
+							String analysis = dao.analzeTendencyByTier();
+							System.out.println("=== 등급별 대표 성향 ===");
+							System.out.println(analysis);
+						} catch (SQLException e) {
+							System.out.println("오류 발생: " + e.getMessage());
+							e.printStackTrace();
+						}
 						break;
 					case "5":
-						System.out.println("평균 방문 주기 호출됨");
+						System.out.println("평균 방문 주기 호출됨\n");
+
+						try {
+							double avgInterval = dao.calAverageVisitInterval("user1"); 
+							System.out.printf("=== [%s님의 평균 방문 주기] ===\n", "유나");
+							if (avgInterval > 0)
+								System.out.printf("평균 방문 간격: %.2f일\n", avgInterval);
+							else
+								System.out.println("예약 이력이 부족하거나 방문 간격 데이터를 계산할 수 없습니다.");
+						} catch (SQLException e) {
+							System.out.println("오류 발생: " + e.getMessage());
+							e.printStackTrace();
+						}
 						break;
 					case "6":
-						System.out.println("티어별 평균 숙박일수 호출됨");
+						System.out.println("티어별 평균 숙박일수 호출됨\n");
+						
 						break;
 					case "7":
-						System.out.println("취소율 계산 호출됨");
+						System.out.println("취소율 계산 호출됨\n");
+						
 						break;
 					case "8":
-						System.out.println("아이디로 사용자 조회 호출됨");
+						System.out.println("아이디로 사용자 조회 호출됨\n");
+						
 						break;
 					case "9":
-						System.out.println("전체 사용자 조회 호출됨");
+						System.out.println("전체 사용자 조회 호출됨\n");
+						
 						break;
 					case "10":
-						System.out.println("전체 예약 조회 호출됨");
+						System.out.println("전체 예약 조회 호출됨\n");
+						
 						break;
 					case "0":
 						System.out.println("로그아웃합니다.");
