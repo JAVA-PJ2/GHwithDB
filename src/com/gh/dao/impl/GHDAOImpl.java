@@ -1047,10 +1047,50 @@ public class GHDAOImpl implements GHDAO {
 	}
 
 	@Override
-	public double calCancelRate() {
-		// TODO Auto-generated method stub
-		return 0;
+	public double calCancelRate() throws SQLException {
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		double cancellationRate = 0.0;
+
+		try {
+			conn = getConnect();
+
+			// 1️. 전체 예약 수
+			String totalQuery = "SELECT COUNT(*) FROM booking_detail";
+			ps = conn.prepareStatement(totalQuery);
+			rs = ps.executeQuery();
+			int totalBookings = 0;
+			if (rs.next()) {
+				totalBookings = rs.getInt(1);
+			}
+			rs.close();
+			ps.close();
+
+			if (totalBookings == 0) {
+				// 예약이 없는 경우 취소율은 0
+				return 0.0;
+			}
+
+			// 2️.취소된 예약 수
+			String canceledQuery = "SELECT COUNT(*) FROM booking_detail WHERE booking_status='C'";
+			ps = conn.prepareStatement(canceledQuery);
+			rs = ps.executeQuery();
+			int canceledBookings = 0;
+			if (rs.next()) {
+				canceledBookings = rs.getInt(1);
+			}
+
+			// 3️. 취소율 계산
+			cancellationRate = (canceledBookings / (double) totalBookings) * 100.0;
+
+		} finally {
+			closeAll(rs, ps, conn);
+		}
+
+		return cancellationRate;
 	}
+
 
 	@Override
 	public Client getClientById(String id) {
