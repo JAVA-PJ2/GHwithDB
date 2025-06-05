@@ -1,5 +1,6 @@
 package com.gh.test;
 
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -10,13 +11,39 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import com.gh.dao.InsertDummyData;
 import com.gh.dao.impl.GHDAOImpl;
 import com.gh.vo.Guesthouse;
 
 public class GHDAOTest {
     public static void main(String[] args) {
         GHDAOImpl dao = GHDAOImpl.getInstance();
+        Scanner sc = new Scanner(System.in);
+        
+        // 사용자 더미 데이터 추가
+//        try {
+//            InsertDummyData inserter = new InsertDummyData();
+//            inserter.insertDummyClients(); // 더미 데이터 삽입 실행
+//        } catch (Exception e) {
+//            System.out.println("데이터 삽입 중 오류 발생: " + e.getMessage());
+//            e.printStackTrace();
+//        }
+        
 
+		try {
+	        System.out.print("아이디 입력: ");
+	        String id = sc.nextLine();
+
+	        System.out.print("비밀번호 입력: ");
+	        String password = sc.nextLine();
+
+			dao.login(id, password);
+		} catch (SQLException e) {
+			System.out.println(e.getMessage());
+			e.printStackTrace();
+		}
+        
+        // 검색 조회 (실시간)
         LocalDate checkIn = LocalDate.of(2025, 6, 5);
         int nights = 2;
         int peopleCnt = 2;
@@ -81,8 +108,7 @@ public class GHDAOTest {
                 }
             }
         };
-
-        Scanner sc = new Scanner(System.in);
+        
         System.out.println("1: 전체 조회 / 2: 조건 조회 / q: 종료");
 
         while (true) {
