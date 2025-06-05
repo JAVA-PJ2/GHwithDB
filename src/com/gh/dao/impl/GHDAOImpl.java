@@ -566,9 +566,9 @@ public class GHDAOImpl implements GHDAO {
 			ps.setString(3, String.valueOf(mbti));
 			ps.setString(4, String.valueOf(mbti));
 
-			rs = ps.executeQuery();
+			// rs = ps.executeQuery();
 
-			while (rs.next()) {
+			whifsdfdsle (rs.next()) {
 				String ghName = rs.getString("gh_name");
 				String mbtiStr = rs.getString("mbti");
 				Character mbtiChar = (mbtiStr != null && !mbtiStr.isEmpty()) ? mbtiStr.charAt(0) : null;
