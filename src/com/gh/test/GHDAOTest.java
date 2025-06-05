@@ -1,11 +1,11 @@
 package com.gh.test;
 
 import java.sql.SQLException;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -13,6 +13,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import com.gh.dao.impl.GHDAOImpl;
+import com.gh.vo.Booking;
+import com.gh.vo.Client;
 import com.gh.vo.Guesthouse;
 
 public class GHDAOTest {
@@ -118,6 +120,9 @@ public class GHDAOTest {
 			boolean success = false;
 			String userId = null;
 
+			// 로그인한 사용자 정보 !!!!!!!!
+			Client c = null;
+
 			while (!success) {
 				try {
 					System.out.print("아이디 입력: ");
@@ -126,9 +131,17 @@ public class GHDAOTest {
 					System.out.print("비밀번호 입력: ");
 					String password = sc.nextLine();
 
-					// 로그인 시도
-					dao.login(userId, password, type);
-					success = true;
+					if (type.equals("client")) {
+						// Client용 로그인 처리
+						c = dao.login(userId, password); // 로그인 성공 시 Client 객체 반환
+						if (c != null) {
+							success = true;
+						}
+					} else if (type.equals("manager")) {
+						// Manager용 로그인 처리
+						dao.login(userId, password, "manager"); // 반환값 없음
+						success = true;
+					}
 
 				} catch (SQLException e) {
 					System.out.println("로그인 오류: " + e.getMessage());
@@ -156,8 +169,16 @@ public class GHDAOTest {
 
 					switch (clientChoice) {
 					case "1":
-						// dao.reserveBooking(userId); // 이런식으로 호출해서 사용하면 되고 여기서 테스트 코드 구현하면 댐.
+						Booking b = new Booking("1234", c.getId(), "힐링하우스", 1, LocalDate.of(2025, 06, 20), 4, 4);
+						try {
+							dao.reserveBooking(c, b);
+						} catch (SQLException e) {
+							// TODO Auto-generated catch block
+							System.out.println(e.getMessage());
+						}
 						System.out.println("예약하기 호출됨");
+//						Booking booking = new Booking("1234", c.getId(), "힐링하우스", 1, 4, LocalDate.of(2025, 06, 20));
+//						dao.reserveBooking(c, booking);
 						break;
 					case "2":
 						System.out.println("예약 수정 호출됨");
@@ -177,6 +198,7 @@ public class GHDAOTest {
 						break;
 					case "6":
 						System.out.println("내 정보 보기 호출됨");
+						dao.printMyInfo(c);
 						break;
 					case "0":
 						System.out.println("로그아웃합니다.");
@@ -209,10 +231,50 @@ public class GHDAOTest {
 
 					switch (managerChoice) {
 					case "1":
-						System.out.println("주간 방문자 수 호출됨");
+						System.out.println("주간 방문자 수 호출됨\n");
+						try {
+						    LocalDate start = LocalDate.of(2025, 6, 1);
+						    LocalDate end = LocalDate.of(2025, 6, 30);
+
+						    Map<String, Integer> weeklyVisitors = dao.getWeeklyVisitorCount(start, end);
+
+						    System.out.println("=== 2025년 6월 주별 방문 고객 수 ===");
+
+						    if (weeklyVisitors.isEmpty()) {
+						        System.out.println("방문 기록이 없습니다.\n");
+						    } else {
+						        for (Map.Entry<String, Integer> entry : weeklyVisitors.entrySet()) {
+						            System.out.printf("%s : %d명\n", entry.getKey(), entry.getValue());
+						        }
+						    }
+
+						} catch (SQLException e) {
+						    System.out.println("DB 오류: " + e.getMessage());
+						    e.printStackTrace();
+						}
 						break;
 					case "2":
-						System.out.println("주간 매출 호출됨");
+						System.out.println("주간 매출 호출됨\n");
+						try {
+							LocalDate start = LocalDate.of(2025, 06, 01);
+							LocalDate end = LocalDate.of(2025, 06, 30);
+							
+							Map<String, Integer> weeklySales = dao.getWeeklySales(start, end);
+							
+							System.out.println("=== 2025년 6월 주별 매출 ===");
+							
+							if (weeklySales.isEmpty()) {
+						        System.out.println("매출 기록이 없습니다.\n");
+						    } else {
+						    	for (Map.Entry<String, Integer> entry : weeklySales.entrySet()) {
+						    		System.out.printf("%s: %d원\n", entry.getKey(), entry.getValue());
+						    	}						    	
+						    }
+							
+							
+						} catch (SQLException e) {
+							System.out.println(e.getMessage());
+						}
 						break;
 					case "3":
 						System.out.println("최다 예약 게스트하우스 호출됨");

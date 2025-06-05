@@ -276,6 +276,86 @@ public class GHDAOImpl implements GHDAO {
 		}
 
 	}
+	
+	public ArrayList<Booking> getBookingsByClientId(String clientId) throws SQLException {
+	    Connection conn = null;
+	    PreparedStatement ps = null;
+	    ResultSet rs = null;
+	    ArrayList<Booking> list = new ArrayList<>();
+
+	    try {
+	        conn = getConnect();
+	        String sql = "SELECT * FROM booking WHERE client_id = ?";
+	        ps = conn.prepareStatement(sql);
+	        ps.setString(1, clientId);
+	        rs = ps.executeQuery();
+
+	        while (rs.next()) {
+	            String bookingId = rs.getString("booking_id");
+	            String ghName = rs.getString("gh_name"); // 예시: guesthouse 이름
+	            LocalDate checkIn = rs.getDate("check_in").toLocalDate();
+	            int nights = rs.getInt("nights");
+	            int people = rs.getInt("people");
+	            int totalPrice = rs.getInt("total_price");
+	            
+	            // Booking 객체 생성자에 맞춰 수정하세요
+	            Booking booking = new Booking(bookingId, clientId, ghName, people, checkIn, nights, totalPrice);
+	            list.add(booking);
+	        }
+
+	    } finally {
+	        closeAll(rs, ps, conn);
+	    }
+
+	    return list;
+	}
+
+	
+	public Client login(String id, String password) throws SQLException {
+	    Connection conn = null;
+	    PreparedStatement ps = null;
+	    ResultSet rs = null;
+
+	    try {
+	        conn = getConnect();
+	        String query = "SELECT * FROM client WHERE client_id=?";
+	        ps = conn.prepareStatement(query);
+	        ps.setString(1, id);
+	        rs = ps.executeQuery();
+
+	        if (rs.next()) {
+	            String storedHash = rs.getString("client_password");
+	            String inputHash = PasswordUtil.encrypt(password);
+
+	            if (storedHash.equalsIgnoreCase(inputHash)) {
+	                System.out.println(id + "님 로그인 성공!");
+
+	                // 예약 정보 가져오기
+	                ArrayList<Booking> bookings = getBookingsByClientId(id);
+
+	                return new Client(
+	                    rs.getString("client_id"),                
+	                    storedHash,                               
+	                    rs.getString("client_name"),             
+	                    rs.getString("mbti") != null ? rs.getString("mbti").charAt(0) : '\0',
+	                    rs.getString("tier") != null ? rs.getString("tier").charAt(0) : null, 
+	                    bookings                                 
+	                );
+	            } else {
+	                System.out.println("비밀번호가 일치하지 않습니다.");
+	            }
+	        } else {
+	            System.out.println("해당 ID는 존재하지 않습니다.");
+	        }
+	    } finally {
+	        closeAll(rs, ps, conn);
+	    }
+
+	    return null;
+	}
+
+
+
 
 	private boolean checkId(Client client) throws SQLException {
 		Connection conn = null;
@@ -753,7 +833,7 @@ public class GHDAOImpl implements GHDAO {
 	        conn = getConnect();
 	        
 	        // 1. gh 테이블에서 요금 정보 가져오기
-	        String ghquery = "SELECT gh_name, price_weekday, price_weekend FROM gh";
+	        String ghquery = "SELECT gh_name, price_weekday, price_weekend FROM guesthouse";
 	        ps = conn.prepareStatement(ghquery);
 	        rs = ps.executeQuery();
 	        
