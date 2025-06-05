@@ -545,6 +545,11 @@ public class GHDAOImpl implements GHDAO {
 					ps.setString(1, "C");
 					ps.setString(2, bookingId);
 					if(ps.executeUpdate() == 1) {
+						conn = getConnect();
+						query = "UPDATE booking SET total_price=0 WHERE booking_id=?";
+						ps = conn.prepareStatement(query);
+						ps.setString(1, bookingId);
+						ps.executeUpdate();
 						System.out.println("예약이 취소되었습니다.");
 					} else {
 						System.out.println("잘못된 입력입니다.");
