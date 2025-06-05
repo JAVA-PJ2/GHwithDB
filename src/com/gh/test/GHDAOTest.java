@@ -97,7 +97,7 @@ public class GHDAOTest {
 //      }
 
 		while (true) {
-			System.out.println("=========== 로그인 메뉴 ===========");
+			System.out.println("\n=========== 로그인 메뉴 ===========");
 			System.out.println("1. 사용자 로그인  2. 관리자 로그인  3. 종료");
 			System.out.print("선택 : ");
 			String choice = sc.nextLine();
@@ -157,7 +157,7 @@ public class GHDAOTest {
 					ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 					ScheduledFuture<?> runningTask = null;
 
-					System.out.println("===== 사용자 메뉴 =====");
+					System.out.println("\n===== 사용자 메뉴 =====");
 					System.out.println("1. 예약하기");
 					System.out.println("2. 예약 수정");
 					System.out.println("3. 예약 취소");
@@ -226,7 +226,7 @@ public class GHDAOTest {
 
 			} else if ("manager".equals(type)) {
 				while (true) {
-					System.out.println("===== 관리자 메뉴 =====");
+					System.out.println("\n===== 관리자 메뉴 =====");
 					System.out.println("1. 주간 방문자 수");
 					System.out.println("2. 주간 매출");
 					System.out.println("3. 최다 예약 게스트하우스");
@@ -323,7 +323,7 @@ public class GHDAOTest {
 						System.out.println("평균 방문 주기 호출됨\n");
 
 						try {
-							double avgInterval = dao.calAverageVisitInterval("user1"); 
+							double avgInterval = dao.calAverageVisitInterval("user1");
 							System.out.printf("=== [%s님의 평균 방문 주기] ===\n", "유나");
 							if (avgInterval > 0)
 								System.out.printf("평균 방문 간격: %.2f일\n", avgInterval);
@@ -336,7 +336,7 @@ public class GHDAOTest {
 						break;
 					case "6":
 						System.out.println("티어별 평균 숙박일수 호출됨\n");
-						
+
 						try {
 							dao.calAverageStayByTier();
 						} catch (Exception e) {
@@ -345,46 +345,103 @@ public class GHDAOTest {
 						break;
 					case "7":
 						System.out.println("취소율 계산 호출됨\n");
-						 try {
-						        double cancelRate = dao.calCancelRate();
-						        System.out.printf("총 예약 대비 취소율: %.2f%%\n\n", cancelRate);
-						    } catch (Exception e) {
-						        System.out.println("취소율 계산 중 오류 발생: " + e.getMessage());
-						        e.printStackTrace();
-						    }
+						try {
+							double cancelRate = dao.calCancelRate();
+							System.out.printf("총 예약 대비 취소율: %.2f%%\n\n", cancelRate);
+						} catch (Exception e) {
+							System.out.println("취소율 계산 중 오류 발생: " + e.getMessage());
+							e.printStackTrace();
+						}
 						break;
 					case "8":
 						System.out.println("아이디로 사용자 조회 호출됨\n");
-						
+
+					    System.out.print("조회할 사용자 ID 입력: ");
+					    String inputId = sc.nextLine();
+
+					    try {
+					        Client client = dao.getClientById(inputId);
+					        
+					        System.out.println("=== 사용자 정보 ===");
+					        System.out.println("ID: " + client.getId());
+					        System.out.println("이름: " + client.getName());
+					        System.out.println("MBTI: " + client.getMbti());
+					        System.out.println("등급: " + client.getTier());
+
+					        System.out.println("\n=== 예약 내역 ===");
+					        List<Booking> bookings = client.getBookings();
+					        if (bookings == null || bookings.isEmpty()) {
+					            System.out.println("예약 내역이 없습니다.");
+					        } else {
+					            for (Booking b : bookings) {
+					                System.out.printf("예약ID: %s, 게스트하우스: %s, 인원: %d, 체크인: %s, 숙박일수: %d, 총액: %d\n",
+					                        b.getBookingId(), b.getGhName(), b.getPeopleCnt(),
+					                        b.getCheckInDate(), b.getNights(), b.getTotalPrice());
+					            }
+					            System.out.println();
+					        }
+
+					    } catch (Exception e) {
+					        System.out.println("❌ 사용자 조회 실패: " + e.getMessage());
+					    }
 						break;
 					case "9":
 						System.out.println("전체 사용자 조회 호출됨\n");
-						   try {
-						        ArrayList<Client> clients = dao.getAllClients();
-						        if (clients.isEmpty()) {
-						            System.out.println("등록된 사용자가 없습니다.");
-						        } else {
-						            for (Client client : clients) {
-						                System.out.printf("ID: %s | 이름: %s | MBTI: %s | 등급: %s | 예약 수: %d\n",
-						                		client.getId(), client.getName(), client.getMbti(), client.getTier(), client.getBookings() != null ? client.getBookings().size() : 0);
-						                if (client.getBookings() != null) {
-						                    for (Booking b : client.getBookings()) {
-						                        System.out.printf("  - 예약ID: %s | 게스트하우스: %s | 인원: %d | 체크인: %s | 숙박일수: %d | 가격: %,d원\n",
-						                            b.getBookingId(), b.getGhName(), b.getPeopleCnt(), b.getCheckInDate(),
-						                            b.getNights(), b.getTotalPrice());
-						                    }
-						                }
-						                System.out.println("------------------------------------------------------");
-						            }
-						        }
-						    } catch (SQLException e) {
-						        System.out.println("오류 발생: " + e.getMessage());
-						        e.printStackTrace();
-						    }
+						try {
+							ArrayList<Client> clients = dao.getAllClients();
+							if (clients.isEmpty()) {
+								System.out.println("등록된 사용자가 없습니다.");
+							} else {
+								for (Client client : clients) {
+									System.out.printf("ID: %s | 이름: %s | MBTI: %s | 등급: %s | 예약 수: %d\n",
+											client.getId(), client.getName(), client.getMbti(), client.getTier(),
+											client.getBookings() != null ? client.getBookings().size() : 0);
+									if (client.getBookings() != null) {
+										for (Booking b : client.getBookings()) {
+											System.out.printf(
+													"  - 예약ID: %s | 게스트하우스: %s | 인원: %d | 체크인: %s | 숙박일수: %d | 가격: %,d원\n",
+													b.getBookingId(), b.getGhName(), b.getPeopleCnt(),
+													b.getCheckInDate(), b.getNights(), b.getTotalPrice());
+										}
+									}
+									System.out.println("------------------------------------------------------");
+								}
+							}
+						} catch (SQLException e) {
+							System.out.println("오류 발생: " + e.getMessage());
+							e.printStackTrace();
+						}
 						break;
 					case "10":
 						System.out.println("전체 예약 조회 호출됨\n");
 						
+						try {
+					        ArrayList<Booking> bookings = dao.getAllBookings();
+
+					        System.out.println("=== 전체 예약 목록 ===");
+					        if (bookings.isEmpty()) {
+					            System.out.println("예약된 정보가 없습니다.");
+					        } else {
+					            for (Booking b : bookings) {
+					                System.out.printf(
+					                    "예약ID: %s | 사용자ID: %s | 게스트하우스: %s | 인원: %d | 체크인: %s | 숙박일수: %d | 총금액: %,d원\n",
+					                    b.getBookingId(),
+					                    b.getClientId(),
+					                    b.getGhName(),
+					                    b.getPeopleCnt(),
+					                    b.getCheckInDate(),
+					                    b.getNights(),
+					                    b.getTotalPrice()
+					                );
+					            }
+					            System.out.println();
+					        }
+
+					    } catch (SQLException e) {
+					        System.out.println("예약 정보 조회 중 오류 발생: " + e.getMessage());
+					        e.printStackTrace();
+					    }
+
 						break;
 					case "0":
 						System.out.println("로그아웃합니다.");
