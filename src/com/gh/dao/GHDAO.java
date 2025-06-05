@@ -35,7 +35,7 @@ public interface GHDAO {
 	Client getClientById(String id);
 	ArrayList<Client> getAllClients() throws SQLException;
 	ArrayList<Booking> getBookings(String clientId) throws SQLException;
-	ArrayList<Booking> getAllBookings();
+	ArrayList<Booking> getAllBookings() throws SQLException;
 	String analzeTendencyByTier(Client c) throws SQLException;
 	ArrayList<Guesthouse> recommendGH(int price, char mbti);
 }

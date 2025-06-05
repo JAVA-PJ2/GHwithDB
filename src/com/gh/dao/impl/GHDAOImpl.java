@@ -921,8 +921,32 @@ Map<String, Double> result = new LinkedHashMap<>();
 	}
 
 	@Override
-	public ArrayList<Booking> getAllBookings() {
-		// TODO Auto-generated method stub
-		return null;
+	public ArrayList<Booking> getAllBookings() throws SQLException {
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		ArrayList<Booking> list = new ArrayList<Booking>();
+ 
+		try {
+			conn = getConnect();
+			String query = "SELECT booking_id, client_id, people, "
+					+ "check_in, nights,  total_price,  gh_name "
+					+ "FROM booking "
+					+ "ORDER BY client_id";
+			ps = conn.prepareStatement(query);
+			rs = ps.executeQuery();
+			while (rs.next()) {
+				list.add(new Booking(rs.getString("booking_id"),
+									rs.getString("client_id"),
+									rs.getString("gh_name"),
+									rs.getInt("people"),
+									rs.getDate("check_in").toLocalDate(),
+									rs.getInt("nights"),
+									rs.getInt("total_price")));
+			}	
+		} finally {
+			closeAll(rs, ps, conn);
+		}
+		return list;
 	}
 }
