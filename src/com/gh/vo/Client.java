@@ -12,6 +12,15 @@ public class Client {
 	
 	public Client() {}
 
+	public Client(String id, String password, String name, char mbti, Character tier) {
+		super();
+		this.id = id;
+		this.password = password;
+		this.name = name;
+		this.mbti = mbti;
+		this.tier = tier;
+	}
+	
 	public Client(String id, String password, String name, char mbti, Character tier, ArrayList<Booking> bookings) {
 		super();
 		this.id = id;
