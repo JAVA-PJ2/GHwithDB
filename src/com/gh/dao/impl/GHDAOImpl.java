@@ -6,6 +6,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -261,49 +262,94 @@ public class GHDAOImpl implements GHDAO {
 		}
 	}
 
+	private int calcTotalPrice(LocalDate checkIn, int nights, int weekdayPrice, int weekendPrice) {
+		int total = 0;
+		for (int i = 0; i < nights; i++) {
+			LocalDate current = checkIn.plusDays(i);
+			DayOfWeek day = current.getDayOfWeek();
+			if (day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY) {
+				total += weekendPrice;
+			} else {
+				total += weekdayPrice;
+			}
+		}
+		return total;
+	}
+	
+	@Override
+	public Guesthouse getGuesthouse(String ghName) throws SQLException {
+		Guesthouse gh = null;
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			conn = getConnect();
+			String query = "SELECT gh_name, mbti, price_weekday, price_weekend, max_capacity from guesthouse WHERE gh_name=?";
+			ps = conn.prepareStatement(query);
+			ps.setString(1, ghName);
+			rs = ps.executeQuery();
+			if (rs.next()) {
+				gh = new Guesthouse(rs.getString("gh_name"),
+									rs.getString("mbti").charAt(0),
+									rs.getInt("price_weekday"),
+									rs.getInt("price_weekend"),
+									rs.getInt("max_capacity"));
+			} else {
+				System.out.println("찾으시는 게스트 하우스가 없습니다.");
+			}
+		} finally {
+			closeAll(rs, ps, conn);
+		}
+		return gh;
+	}
+	
 	@Override
 	public void reserveBooking(Client client, Booking booking) throws SQLException {
 		Connection conn = null;
 		PreparedStatement ps = null;
-		if (checkId(client)) {
-			try {
-				String uuid = UUID.randomUUID().toString();
-				if (canBook(booking.getBookingId(), booking.getCheckInDate(), booking.getNights(),
-						booking.getPeopleCnt())) {
-					conn = getConnect();
-					String query = "INSERT INTO booking VALUES (?, ?, ?, ?, ?, ?, ?)";
-					ps = conn.prepareStatement(query);
-					ps.setString(1, uuid);
-					ps.setString(2, client.getId());
-					ps.setString(3, booking.getGhName());
-					ps.setInt(4, booking.getPeopleCnt());
-					ps.setString(5, booking.getCheckInDate().toString());
-					ps.setInt(6, booking.getNights());
-					if (client.getTier().equals('G'))
-						ps.setInt(7, (int)(booking.getTotalPrice() * 0.85));
-					else if (client.getTier().equals('S'))
-						ps.setInt(7, (int)(booking.getTotalPrice() * 0.9));
-					else if (client.getTier().equals('B'))
-						ps.setInt(7, (int)(booking.getTotalPrice() * 0.95));
-					else
-						ps.setInt(7, booking.getTotalPrice());
-					ps.executeUpdate();
-					conn = getConnect();
-					query = "INSERT INTO booking_detail (gh_name, booking_date, booking_status, booking_id) VALUES (?, ?, ?, ?)";
-					ps = conn.prepareStatement(query);
-					ps.setString(1, booking.getGhName());
-					ps.setString(2, booking.getCheckInDate().toString());
-					ps.setString(3, "R");
-					ps.setString(4, uuid);
-					System.out.println(ps.executeUpdate() + "개 예약 완료되었습니다.");
-				} else {
-					System.out.println("예약할 수 없습니다.");
+		try {
+			String uuid = UUID.randomUUID().toString();
+			booking.setBookingId(uuid);
+			if (canBook(booking.getBookingId(), booking.getCheckInDate(), booking.getNights(),
+					booking.getPeopleCnt())) {
+				Guesthouse gh = getGuesthouse(booking.getGhName());
+				if (gh == null) {
+					System.out.println("찾으시는 게스트하우스는 존재하지 않습니다.");
+					return ;
 				}
-			} finally {
-				closeAll(ps, conn);
+				int totalPrice = calcTotalPrice(booking.getCheckInDate(), booking.getNights(),
+												gh.getPriceWeekday(), gh.getPriceWeekend());
+				conn = getConnect();
+				String query = "INSERT INTO booking VALUES (?, ?, ?, ?, ?, ?, ?)";
+				ps = conn.prepareStatement(query);
+				ps.setString(1, uuid);
+				ps.setString(2, client.getId());
+				ps.setString(3, booking.getGhName());
+				ps.setInt(4, booking.getPeopleCnt());
+				ps.setString(5, booking.getCheckInDate().toString());
+				ps.setInt(6, booking.getNights());
+				if (client.getTier().equals('G'))
+					ps.setInt(7, (int)(totalPrice * 0.85));
+				else if (client.getTier().equals('S'))
+					ps.setInt(7, (int)(totalPrice * 0.9));
+				else if (client.getTier().equals('B'))
+					ps.setInt(7, (int)(totalPrice * 0.95));
+				else
+					ps.setInt(7, totalPrice);
+				ps.executeUpdate();
+				conn = getConnect();
+				query = "INSERT INTO booking_detail (gh_name, booking_date, booking_status, booking_id) VALUES (?, ?, ?, ?)";
+				ps = conn.prepareStatement(query);
+				ps.setString(1, booking.getGhName());
+				ps.setString(2, booking.getCheckInDate().toString());
+				ps.setString(3, "R");
+				ps.setString(4, uuid);
+				System.out.println(ps.executeUpdate() + "개 예약 완료되었습니다.");
+			} else {
+				System.out.println("예약할 수 없습니다.");
 			}
-		} else {
-			System.out.println("등록된 ID가 아닙니다.");
+		} finally {
+			closeAll(ps, conn);
 		}
 	}
 
