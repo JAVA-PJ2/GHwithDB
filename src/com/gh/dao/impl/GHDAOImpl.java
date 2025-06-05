@@ -487,28 +487,40 @@ public class GHDAOImpl implements GHDAO {
 	}
 
 
+	@Override
 	public void updateBooking(Client client, Booking booking) throws SQLException {
 		Connection conn = null;
 		PreparedStatement ps = null;
-		if (checkId(client)) {
+		if (client.getId().equals(checkId(booking.getBookingId()))) {
 			try {
-				if (canBook(booking.getGhName(), booking.getCheckInDate(), booking.getNights(),
-						booking.getPeopleCnt())) {
+				if (canBook(booking.getGhName(), booking.getCheckInDate(), booking.getNights(), booking.getPeopleCnt())) {
+					Guesthouse gh = getGuesthouse(booking.getGhName());
+					int totalPrice = calcTotalPrice(booking.getCheckInDate(), booking.getNights(),
+							gh.getPriceWeekday(), gh.getPriceWeekend());
 					conn = getConnect();
-					String query = "UPDATE booking SET check_in=?, people=?, nights=? WHERE booking_id=? AND client_id=?";
+					String query = "UPDATE booking SET check_in=?, people=?, nights=?, total_price=? WHERE booking_id=? AND client_id=?";
 					ps = conn.prepareStatement(query);
 					ps.setString(1, booking.getCheckInDate().toString());
 					ps.setInt(2, booking.getPeopleCnt());
 					ps.setInt(3, booking.getNights());
-					ps.setString(4, booking.getBookingId());
-					ps.setString(5, client.getId());
+					if (client.getTier().equals('G'))
+						ps.setInt(4, (int)(totalPrice * 0.85));
+					else if (client.getTier().equals('S'))
+						ps.setInt(4, (int)(totalPrice * 0.9));
+					else if (client.getTier().equals('B'))
+						ps.setInt(4, (int)(totalPrice * 0.95));
+					else
+						ps.setInt(4, totalPrice);
+					ps.setString(5, booking.getBookingId());
+					ps.setString(6, client.getId());
 					if (ps.executeUpdate() == 1) {
 						conn = getConnect();
-						query = "UPDATE booking_detail SET booking_date=?";
+						query = "UPDATE booking_detail SET booking_date=? WHERE booking_id =?";
 						ps = conn.prepareStatement(query);
 						ps.setString(1, booking.getCheckInDate().toString());
+						ps.setString(2, booking.getBookingId());
 						System.out.println(ps.executeUpdate() + "개 예약이 변경되었습니다.");
-					} else
+					} else 
 						System.out.println("변경하실 수 없습니다.");
 				} else {
 					System.out.println("변경할 수 없는 날짜입니다.");
@@ -516,8 +528,8 @@ public class GHDAOImpl implements GHDAO {
 			} finally {
 				closeAll(ps, conn);
 			}
-		} else
-			System.out.println("없는 사용자입니다.");
+		}else
+			System.out.println("잘못된 사용자입니다.");
 	}
 
 	@Override
