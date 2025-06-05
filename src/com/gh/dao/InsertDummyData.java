@@ -45,7 +45,39 @@ public class InsertDummyData {
 	        }
 
 	        System.out.println("클라이언트 더미 데이터 삽입 완료");
-		}finally {
+		} finally {
+			conn.close();
+		}
+		
+	}
+	
+	public void insertDummyManagers() throws SQLException {
+		Connection conn = null;
+		PreparedStatement ps = null;
+		
+		String[][] managers = {
+				{"mgr1", "pass1234"},
+				{"mgr2", "pass2345"},
+				{"mgr3", "pass3456"},
+				{"mgr4", "pass4567"},
+		   
+		    };
+		
+		try {
+			conn = getConnect();
+			String sql = "INSERT INTO manager (manager_id, manager_password) VALUES (?, ?)";
+			
+			ps = conn.prepareStatement(sql);
+
+	        for (String[] manager : managers) {
+	            ps.setString(1, manager[0]); 
+	            ps.setString(2, PasswordUtil.encrypt(manager[1])); // 암호화
+
+	            ps.executeUpdate();
+	        }
+
+	        System.out.println("매니저 더미 데이터 삽입 완료");
+		} finally {
 			conn.close();
 		}
 		

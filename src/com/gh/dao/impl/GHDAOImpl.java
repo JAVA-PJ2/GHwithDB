@@ -232,30 +232,44 @@ public class GHDAOImpl implements GHDAO {
 	// 됩니다
 
 	@Override
-	public void login(String id, String password) throws SQLException {
+	public void login(String id, String password, String type) throws SQLException {
 		Connection conn = null;
 		PreparedStatement ps = null;
 		ResultSet rs = null;
-		
+
 		try {
 			conn = getConnect();
-			String query = "SELECT client_password FROM client WHERE client_id=?";
+
+			String query = null;
+			String column = null;
+			
+			if ("client".equalsIgnoreCase(type)) {
+				query = "SELECT client_password FROM client WHERE client_id=?";
+				column = "client_password";
+			} else if ("manager".equalsIgnoreCase(type)) {
+				query = "SELECT manager_password FROM manager WHERE manager_id=?";
+				column = "manager_password";
+			} else {
+				System.out.println("유효하지 않은 사용자 유형입니다 (client 또는 manager)");
+				return;
+			}
+
 			ps = conn.prepareStatement(query);
 			ps.setString(1, id);
 			rs = ps.executeQuery();
-			
-			if(rs.next()) {
-				String storedHash = rs.getString("client_password");
+
+			if (rs.next()) {
+				String storedHash = rs.getString(column);
 				String inputHash = PasswordUtil.encrypt(password);
-				
-				if(storedHash.equalsIgnoreCase(inputHash)) 
+
+				if (storedHash.equalsIgnoreCase(inputHash))
 					System.out.println(id + "님 로그인 성공 ! ");
-				else 
+				else
 					System.out.println("비밀번호가 일치하지 않습니다.");
 			} else {
 				System.out.println("해당 ID는 존재하지 않습니다.");
 			}
-			
+
 		} finally {
 			closeAll(rs, ps, conn);
 		}
@@ -300,11 +314,11 @@ public class GHDAOImpl implements GHDAO {
 					ps.setString(5, booking.getCheckInDate().toString());
 					ps.setInt(6, booking.getNights());
 					if (client.getTier().equals('G'))
-						ps.setInt(7, (int)(booking.getTotalPrice() * 0.85));
+						ps.setInt(7, (int) (booking.getTotalPrice() * 0.85));
 					else if (client.getTier().equals('S'))
-						ps.setInt(7, (int)(booking.getTotalPrice() * 0.9));
+						ps.setInt(7, (int) (booking.getTotalPrice() * 0.9));
 					else if (client.getTier().equals('B'))
-						ps.setInt(7, (int)(booking.getTotalPrice() * 0.95));
+						ps.setInt(7, (int) (booking.getTotalPrice() * 0.95));
 					else
 						ps.setInt(7, booking.getTotalPrice());
 					ps.executeUpdate();
@@ -400,66 +414,58 @@ public class GHDAOImpl implements GHDAO {
 		} finally {
 			closeAll(rs, ps, conn);
 		}
-		
+
 		return availableList;
 	}
 
 	@Override
-	public ArrayList<Guesthouse> searchAvailableGH(LocalDate checkIn, int night, int peopleCnt, int price, char mbti) throws SQLException {
-	    ArrayList<Guesthouse> availableList = new ArrayList<>();
-	    Connection conn = null;
-	    PreparedStatement ps = null;
-	    ResultSet rs = null;
+	public ArrayList<Guesthouse> searchAvailableGH(LocalDate checkIn, int night, int peopleCnt, int price, char mbti)
+			throws SQLException {
+		ArrayList<Guesthouse> availableList = new ArrayList<>();
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
 
-	    try {
-	        conn = getConnect();
+		try {
+			conn = getConnect();
 
-	        String query = "SELECT g.*, " +
-	                       "  IFNULL(cancel_count, 0) / IFNULL(total_count, 1) AS cancel_rate " +
-	                       "FROM guesthouse g " +
-	                       "LEFT JOIN ( " +
-	                       "    SELECT gh_name, " +
-	                       "           SUM(CASE WHEN booking_status = 'C' THEN 1 ELSE 0 END) AS cancel_count, " +
-	                       "           COUNT(*) AS total_count " +
-	                       "    FROM booking_detail " +
-	                       "    GROUP BY gh_name " +
-	                       ") stats ON g.gh_name = stats.gh_name " +
-	                       "WHERE g.price_weekday <= ? AND g.price_weekend <= ? " +
-	                       "ORDER BY " +
-	                       "  CASE WHEN ? = 'E' AND g.mbti = 'E' THEN 0 " +
-	                       "       WHEN ? = 'I' AND g.mbti = 'I' THEN 0 ELSE 1 END, " +
-	                       "  cancel_rate ASC";
+			String query = "SELECT g.*, " + "  IFNULL(cancel_count, 0) / IFNULL(total_count, 1) AS cancel_rate "
+					+ "FROM guesthouse g " + "LEFT JOIN ( " + "    SELECT gh_name, "
+					+ "           SUM(CASE WHEN booking_status = 'C' THEN 1 ELSE 0 END) AS cancel_count, "
+					+ "           COUNT(*) AS total_count " + "    FROM booking_detail " + "    GROUP BY gh_name "
+					+ ") stats ON g.gh_name = stats.gh_name " + "WHERE g.price_weekday <= ? AND g.price_weekend <= ? "
+					+ "ORDER BY " + "  CASE WHEN ? = 'E' AND g.mbti = 'E' THEN 0 "
+					+ "       WHEN ? = 'I' AND g.mbti = 'I' THEN 0 ELSE 1 END, " + "  cancel_rate ASC";
 
-	        ps = conn.prepareStatement(query);
-	        ps.setInt(1, price); 
-	        ps.setInt(2, price); 
-	        ps.setString(3, String.valueOf(mbti)); 
-	        ps.setString(4, String.valueOf(mbti));
+			ps = conn.prepareStatement(query);
+			ps.setInt(1, price);
+			ps.setInt(2, price);
+			ps.setString(3, String.valueOf(mbti));
+			ps.setString(4, String.valueOf(mbti));
 
-	        rs = ps.executeQuery();
+			rs = ps.executeQuery();
 
-	        while (rs.next()) {
-	            String ghName = rs.getString("gh_name");
-	            String mbtiStr = rs.getString("mbti");
-	            Character mbtiChar = (mbtiStr != null && !mbtiStr.isEmpty()) ? mbtiStr.charAt(0) : null;
-	            int priceWeekday = rs.getInt("price_weekday");
-	            int priceWeekend = rs.getInt("price_weekend");
-	            int maxCapacity = rs.getInt("max_capacity");
+			while (rs.next()) {
+				String ghName = rs.getString("gh_name");
+				String mbtiStr = rs.getString("mbti");
+				Character mbtiChar = (mbtiStr != null && !mbtiStr.isEmpty()) ? mbtiStr.charAt(0) : null;
+				int priceWeekday = rs.getInt("price_weekday");
+				int priceWeekend = rs.getInt("price_weekend");
+				int maxCapacity = rs.getInt("max_capacity");
 
-	            Guesthouse gh = new Guesthouse(ghName, mbtiChar, priceWeekday, priceWeekend, maxCapacity);
+				Guesthouse gh = new Guesthouse(ghName, mbtiChar, priceWeekday, priceWeekend, maxCapacity);
 
-	            if (canBook(ghName, checkIn, night, peopleCnt)) {
-	                availableList.add(gh);
-	            }
-	        }
+				if (canBook(ghName, checkIn, night, peopleCnt)) {
+					availableList.add(gh);
+				}
+			}
 
-	    } finally {
-	        closeAll(rs, ps, conn);
-	    }
+		} finally {
+			closeAll(rs, ps, conn);
+		}
 
-	    return availableList;
+		return availableList;
 	}
-
 
 	public void updateBooking(Client client, Booking booking) throws SQLException {
 		Connection conn = null;
@@ -506,7 +512,7 @@ public class GHDAOImpl implements GHDAO {
 					ps = conn.prepareStatement(query);
 					ps.setString(1, "C");
 					ps.setString(2, bookingId);
-					if(ps.executeUpdate() == 1) {
+					if (ps.executeUpdate() == 1) {
 						System.out.println("예약이 취소되었습니다.");
 					} else {
 						System.out.println("잘못된 입력입니다.");
@@ -514,14 +520,14 @@ public class GHDAOImpl implements GHDAO {
 				} finally {
 					closeAll(ps, conn);
 				}
-			}else {
+			} else {
 				System.out.println("취소할 수 있는 상태의 예약이 아닙니다.");
 			}
-		}else {
+		} else {
 			System.out.println("잘못된 사용자입니다.");
 		}
 	}
-	
+
 	@Override
 	public ArrayList<Guesthouse> recommendGH(int price, char mbti) {
 		// TODO Auto-generated method stub
@@ -643,15 +649,10 @@ public class GHDAOImpl implements GHDAO {
 			conn = getConnect();
 
 			// 주별 방문 고객 수 집계
-			String query = 
-		            "SELECT DISTINCT " +
-		            " YEAR(check_in) AS year, " +
-		            " MONTH(check_in) AS month, " +
-		            " WEEK(check_in, 1) AS week_num, " +
-		            " COUNT(client_id) OVER (PARTITION BY YEAR(check_in), MONTH(check_in), WEEK(check_in, 1)) AS visitor_count " +
-		            "FROM booking " +
-		            "WHERE check_in BETWEEN ? AND ? " +
-		            "ORDER BY year, month, week_num";
+			String query = "SELECT DISTINCT " + " YEAR(check_in) AS year, " + " MONTH(check_in) AS month, "
+					+ " WEEK(check_in, 1) AS week_num, "
+					+ " COUNT(client_id) OVER (PARTITION BY YEAR(check_in), MONTH(check_in), WEEK(check_in, 1)) AS visitor_count "
+					+ "FROM booking " + "WHERE check_in BETWEEN ? AND ? " + "ORDER BY year, month, week_num";
 
 			ps = conn.prepareStatement(query);
 			ps.setDate(1, java.sql.Date.valueOf(checkIn));
@@ -715,70 +716,60 @@ public class GHDAOImpl implements GHDAO {
 	@Override
 	public String analzeTendencyByTier(Client c) throws SQLException {
 		Connection conn = null;
-	    PreparedStatement ps = null;
-	    PreparedStatement psTier = null;
-	    ResultSet rs = null;
-	    ResultSet rsTier = null;
-	    StringBuilder result = new StringBuilder();
-	    
-	    char[] tiers = {'b', 's', 'g'};
+		PreparedStatement ps = null;
+		PreparedStatement psTier = null;
+		ResultSet rs = null;
+		ResultSet rsTier = null;
+		StringBuilder result = new StringBuilder();
 
-	    try {
-	        conn = getConnect();
+		char[] tiers = { 'b', 's', 'g' };
 
-	        // 1. DB에서 distinct tier 값들 먼저 가져오기
-	        String tierQuery = "SELECT DISTINCT tier FROM client WHERE tier IN ('b', 's', 'g')";
-	        psTier = conn.prepareStatement(tierQuery);
-	        rsTier = psTier.executeQuery();
+		try {
+			conn = getConnect();
 
-	        // 2. 대표 성향 쿼리 준비
-	        String query = 
-	            "SELECT " +
-	            "CASE c.tier " +
-	            "    WHEN 'b' THEN 'bronze' " +
-	            "    WHEN 's' THEN 'silver' " +
-	            "    WHEN 'g' THEN 'gold' " +
-	            "    ELSE '알 수 없음' " +
-	            "END AS tier_name, " +
-	            "c.mbti, COUNT(*) AS cnt " +
-	            "FROM client c " +
-	            "JOIN booking b ON c.client_id = b.client_id " +
-	            "WHERE c.tier = ? AND c.mbti IN ('E', 'I') " +
-	            "GROUP BY tier_name, c.mbti " +
-	            "ORDER BY cnt DESC " +
-	            "LIMIT 1";
+			// 1. DB에서 distinct tier 값들 먼저 가져오기
+			String tierQuery = "SELECT DISTINCT tier FROM client WHERE tier IN ('b', 's', 'g')";
+			psTier = conn.prepareStatement(tierQuery);
+			rsTier = psTier.executeQuery();
 
-	        ps = conn.prepareStatement(query);
+			// 2. 대표 성향 쿼리 준비
+			String query = "SELECT " + "CASE c.tier " + "    WHEN 'b' THEN 'bronze' " + "    WHEN 's' THEN 'silver' "
+					+ "    WHEN 'g' THEN 'gold' " + "    ELSE '알 수 없음' " + "END AS tier_name, "
+					+ "c.mbti, COUNT(*) AS cnt " + "FROM client c " + "JOIN booking b ON c.client_id = b.client_id "
+					+ "WHERE c.tier = ? AND c.mbti IN ('E', 'I') " + "GROUP BY tier_name, c.mbti "
+					+ "ORDER BY cnt DESC " + "LIMIT 1";
 
-	        for (char tier : tiers) {
-	            System.out.println("현재 tier: " + tier);
-	            ps.setString(1, String.valueOf(tier));
-	            rs = ps.executeQuery();
+			ps = conn.prepareStatement(query);
 
-	            String tierStr = switch (tier) {
-	                case 'b' -> "bronze";
-	                case 's' -> "silver";
-	                case 'g' -> "gold";
-	                default -> "null";
-	            };
+			for (char tier : tiers) {
+				System.out.println("현재 tier: " + tier);
+				ps.setString(1, String.valueOf(tier));
+				rs = ps.executeQuery();
 
-	            if (rs.next()) {
-	                String mbti = rs.getString("mbti");
-	                System.out.println("쿼리 결과 mbti: " + mbti);
-	                result.append(String.format("%s 등급의 대표 성향: %s\n", tierStr, mbti));
-	            } else {
-	                System.out.println("쿼리 결과 없음");
-	                result.append(String.format("%s 등급의 대표 성향: 알 수 없음\n", tierStr));
-	            }
+				String tierStr = switch (tier) {
+				case 'b' -> "bronze";
+				case 's' -> "silver";
+				case 'g' -> "gold";
+				default -> "null";
+				};
 
-	            rs.close();
-	        }
-	    } finally {
-	        closeAll(rsTier, psTier, null);
-	        closeAll(null, ps, conn);
-	    }
+				if (rs.next()) {
+					String mbti = rs.getString("mbti");
+					System.out.println("쿼리 결과 mbti: " + mbti);
+					result.append(String.format("%s 등급의 대표 성향: %s\n", tierStr, mbti));
+				} else {
+					System.out.println("쿼리 결과 없음");
+					result.append(String.format("%s 등급의 대표 성향: 알 수 없음\n", tierStr));
+				}
 
-	    return result.toString();
+				rs.close();
+			}
+		} finally {
+			closeAll(rsTier, psTier, null);
+			closeAll(null, ps, conn);
+		}
+
+		return result.toString();
 	}
 
 	@Override
@@ -827,43 +818,35 @@ public class GHDAOImpl implements GHDAO {
 
 	@Override
 	public Map<String, Double> calAverageStayByTier() throws DMLException, SQLException {
-Map<String, Double> result = new LinkedHashMap<>();
-		
+		Map<String, Double> result = new LinkedHashMap<>();
+
 		Connection conn = null;
 		PreparedStatement ps = null;
 		ResultSet rs = null;
-		
+
 		try {
 			conn = getConnect();
-			
-			String query = 
-					"SELECT " +
-	        	    "CASE c.tier " +
-	        	    "    WHEN 'b' THEN 'bronze' " +
-	        	    "    WHEN 's' THEN 'silver' " +
-	        	    "    WHEN 'g' THEN 'gold' " +
-	        	    "    ELSE '알 수 없음' " +
-	        	    "END AS tier_name, " +
-	        	    "AVG(b.nights) AS avg_nights " + // 숙박 일수 평균
-	        	    "FROM client c " +
-	        	    "JOIN booking b ON c.client_id = b.client_id " +
-	        	    "GROUP BY c.tier " +
-	        	    "ORDER BY avg_nights DESC";
+
+			String query = "SELECT " + "CASE c.tier " + "    WHEN 'b' THEN 'bronze' " + "    WHEN 's' THEN 'silver' "
+					+ "    WHEN 'g' THEN 'gold' " + "    ELSE '알 수 없음' " + "END AS tier_name, "
+					+ "AVG(b.nights) AS avg_nights " + // 숙박 일수 평균
+					"FROM client c " + "JOIN booking b ON c.client_id = b.client_id " + "GROUP BY c.tier "
+					+ "ORDER BY avg_nights DESC";
 			ps = conn.prepareStatement(query);
 			rs = ps.executeQuery();
-			
+
 			while (rs.next()) {
 				String tierName = rs.getString("tier_name");
 				double avgNights = rs.getDouble("avg_nights");
 				result.put(tierName, avgNights);
 			}
-			
+
 		} catch (SQLException e) {
-	        throw new DMLException("등급별 숙박 일수 평균을 구하는 중 오류 발생: " + e.getMessage());
+			throw new DMLException("등급별 숙박 일수 평균을 구하는 중 오류 발생: " + e.getMessage());
 		} finally {
 			closeAll(rs, ps, conn);
 		}
-		
+
 		return result;
 	}
 
@@ -882,18 +865,19 @@ Map<String, Double> result = new LinkedHashMap<>();
 	private HashMap<String, ArrayList<Booking>> groupedBookingsByClient() throws SQLException {
 		HashMap<String, ArrayList<Booking>> map = new HashMap<String, ArrayList<Booking>>();
 		ArrayList<Booking> allBookings = getAllBookings();
-		if (allBookings.size() == 0) return map;
+		if (allBookings.size() == 0)
+			return map;
 		String clientId = null;
 		for (Booking b : allBookings) {
 			if (!b.getClientId().equals(clientId)) {
 				clientId = b.getClientId();
-				map.put(clientId ,new ArrayList<Booking>());
+				map.put(clientId, new ArrayList<Booking>());
 			}
 			map.get(clientId).add(b);
 		}
 		return map;
 	}
-	
+
 	@Override
 	public ArrayList<Client> getAllClients() throws SQLException {
 		ArrayList<Client> clients = new ArrayList<Client>();
@@ -908,19 +892,15 @@ Map<String, Double> result = new LinkedHashMap<>();
 			rs = ps.executeQuery();
 			while (rs.next()) {
 				String clientId = rs.getString("client_id");
-				clients.add(new Client(clientId,
-									   rs.getString("client_password"),
-									   rs.getString("client_name"),
-									   rs.getString("mbti").charAt(0),
-									   rs.getString("tier").charAt(0),
-									   map.get(clientId)));
+				clients.add(new Client(clientId, rs.getString("client_password"), rs.getString("client_name"),
+						rs.getString("mbti").charAt(0), rs.getString("tier").charAt(0), map.get(clientId)));
 			}
-		}finally {
+		} finally {
 			closeAll(rs, ps, conn);
 		}
 		return clients;
 	}
-	
+
 	public ArrayList<Booking> getBookings(String clientId) throws SQLException {
 		ArrayList<Booking> bookings = new ArrayList<Booking>();
 		Connection conn = null;
@@ -933,15 +913,11 @@ Map<String, Double> result = new LinkedHashMap<>();
 			ps.setString(1, clientId);
 			rs = ps.executeQuery();
 			while (rs.next()) {
-				bookings.add(new Booking(rs.getString("booking_id"),
-										 clientId,
-										 rs.getString("gh_name"),
-										 rs.getInt("people"),
-										 rs.getDate("check_in").toLocalDate(),
-										 rs.getInt("nights"),
-										 rs.getInt("total_price")));
+				bookings.add(
+						new Booking(rs.getString("booking_id"), clientId, rs.getString("gh_name"), rs.getInt("people"),
+								rs.getDate("check_in").toLocalDate(), rs.getInt("nights"), rs.getInt("total_price")));
 			}
-		}finally {
+		} finally {
 			closeAll(rs, ps, conn);
 		}
 		return bookings;
@@ -953,24 +929,18 @@ Map<String, Double> result = new LinkedHashMap<>();
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		ArrayList<Booking> list = new ArrayList<Booking>();
- 
+
 		try {
 			conn = getConnect();
-			String query = "SELECT booking_id, client_id, people, "
-					+ "check_in, nights,  total_price,  gh_name "
-					+ "FROM booking "
-					+ "ORDER BY client_id";
+			String query = "SELECT booking_id, client_id, people, " + "check_in, nights,  total_price,  gh_name "
+					+ "FROM booking " + "ORDER BY client_id";
 			ps = conn.prepareStatement(query);
 			rs = ps.executeQuery();
 			while (rs.next()) {
-				list.add(new Booking(rs.getString("booking_id"),
-									rs.getString("client_id"),
-									rs.getString("gh_name"),
-									rs.getInt("people"),
-									rs.getDate("check_in").toLocalDate(),
-									rs.getInt("nights"),
-									rs.getInt("total_price")));
-			}	
+				list.add(new Booking(rs.getString("booking_id"), rs.getString("client_id"), rs.getString("gh_name"),
+						rs.getInt("people"), rs.getDate("check_in").toLocalDate(), rs.getInt("nights"),
+						rs.getInt("total_price")));
+			}
 		} finally {
 			closeAll(rs, ps, conn);
 		}
