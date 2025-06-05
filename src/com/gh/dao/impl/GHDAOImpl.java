@@ -817,6 +817,44 @@ public class GHDAOImpl implements GHDAO {
 
 		return result;
 	}
+	
+	public Map<String, Integer> getWeeklyVisitorCount(LocalDate checkIn, LocalDate checkOut) throws SQLException {
+		Map<String, Integer> result = new LinkedHashMap<>();
+
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+
+		try {
+			conn = getConnect();
+
+			// 주별 방문 고객 수 집계
+			String query = "SELECT DISTINCT " + " YEAR(check_in) AS year, " + " MONTH(check_in) AS month, "
+					+ " WEEK(check_in, 1) AS week_num, "
+					+ " COUNT(client_id) OVER (PARTITION BY YEAR(check_in), MONTH(check_in), WEEK(check_in, 1)) AS visitor_count "
+					+ "FROM booking " + "WHERE check_in BETWEEN ? AND ? " + "ORDER BY year, month, week_num";
+
+			ps = conn.prepareStatement(query);
+			ps.setDate(1, java.sql.Date.valueOf(checkIn));
+			ps.setDate(2, java.sql.Date.valueOf(checkOut));
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+				int year = rs.getInt("year");
+				int month = rs.getInt("month");
+				int week = rs.getInt("week_num");
+				int count = rs.getInt("visitor_count");
+
+				String key = String.format("%d년 %02d월 %d주차", year, month, week);
+				result.put(key, count);
+			}
+
+		} finally {
+			closeAll(rs, ps, conn);
+		}
+
+		return result;
+	}
 
 	// 주별 매출 집계
 	@Override
