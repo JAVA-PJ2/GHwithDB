@@ -890,9 +890,33 @@ public class GHDAOImpl implements GHDAO {
 	}
 
 	@Override
-	public double calAverageVisitInterval(Client client) {
-		// TODO Auto-generated method stub
-		return 0;
+	public double calAverageVisitInterval(Client client) throws SQLException {
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		double totalInterval = 0;
+		int count = 0;
+		try {
+			conn = getConnect();
+			String query = "SELECT booking_id, check_in, "
+					+ "DATEDIFF(check_in, LAG(check_in) OVER (PARTITION BY client_id ORDER BY check_in)) AS visit_interval "
+					+ "FROM booking " + "WHERE client_id = ? " + "ORDER BY check_in";
+			ps = conn.prepareStatement(query);
+			ps.setString(1, client.getId());
+			rs = ps.executeQuery();
+			while (rs.next()) {
+				int interval = rs.getInt("visit_interval");
+				if (!rs.wasNull()) {
+					totalInterval += interval;
+					count++;
+				}
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			closeAll(rs, ps, conn);
+		}
+		return count > 0 ? totalInterval/count : 0;
 	}
 
 	@Override

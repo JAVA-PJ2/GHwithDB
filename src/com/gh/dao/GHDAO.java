@@ -30,7 +30,7 @@ public interface GHDAO {
 	Map<String, Integer> getWeeklyVisitorCount(LocalDate checkIn, LocalDate checkOut) throws SQLException;
 	Map<String, Integer> getWeeklySales(LocalDate checkIn, LocalDate checkOut) throws SQLException;
 	Guesthouse getMostBookedGH(LocalDate checkIn, LocalDate checkOut) throws SQLException;
-	double calAverageVisitInterval(Client client);
+	double calAverageVisitInterval(Client client) throws SQLException;
 	Map<String, Double> calAverageStayByTier() throws DMLException, SQLException;
 	double calCancelRate() throws SQLException;
 	Client getClientById(String id) throws SQLException;
