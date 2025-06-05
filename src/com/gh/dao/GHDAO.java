@@ -23,6 +23,7 @@ public interface GHDAO {
 	void printMyInfo(Client c);
 	void cancelBooking(Client client, String bookingId) throws SQLException;
 	void updateBooking(Client client, Booking booking) throws SQLException;
+	Guesthouse getGuesthouse(String ghName) throws SQLException;
 	/*
 	 * Manager
 	 */
