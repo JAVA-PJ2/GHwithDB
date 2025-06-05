@@ -1,5 +1,6 @@
 package com.gh.dao;
 
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Map;
@@ -29,7 +30,7 @@ public interface GHDAO {
 	 * Manager
 	 */
 	Map<String, Integer> getWeeklyVisitorCount(LocalDate checkIn, LocalDate checkOut) throws RecordNotFoundException;
-	Map<String, Integer> getWeeklySales(LocalDate checkIn, LocalDate checkOut) throws RecordNotFoundException;
+	Map<String, Integer> getWeeklySales(LocalDate checkIn, LocalDate checkOut) throws RecordNotFoundException, SQLException;
 	Guesthouse getMostBookedGH(LocalDate checkIn, LocalDate checkOut) throws RecordNotFoundException;
 	double calcAverageVisitInterval(String clientId) throws RecordNotFoundException;
 	Map<String, Double> calAverageStayByTier() throws DMLException;

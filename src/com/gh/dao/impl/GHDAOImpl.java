@@ -675,53 +675,83 @@ public class GHDAOImpl implements GHDAO {
 
 	// 주별 매출 집계
 	@Override
-	public Map<String, Integer> getWeeklySales(LocalDate checkIn, LocalDate checkOut) throws RecordNotFoundException {
+	public Map<String, Integer> getWeeklySales(LocalDate checkIn, LocalDate checkOut) throws RecordNotFoundException, SQLException {
 		Map<String, Integer> result = new LinkedHashMap<>();
-		Map<String, Integer> priceMap = new HashMap<>();
-		String ghquery = "SELECT gh_name, price_weekday, price_weekend FROM gh";
-	    try (Connection conn = getConnect();PreparedStatement ps = conn.prepareStatement(ghquery);) {
+
+	    Connection conn = null;
+	    PreparedStatement ps = null;
+	    ResultSet rs = null;
+
+	    try {
+	        conn = getConnect();
+
 	        // 1. gh 테이블에서 요금 정보 가져오기
-	    	try (ResultSet rs = ps.executeQuery();) {
-		        while (rs.next()) {
-		            String ghName = rs.getString("gh_name");
-		            int price = rs.getInt("price_weekday") + rs.getInt("price_weekend");
-		            priceMap.put(ghName, price);
-		        }
-	    	}
-	        // 2. booking에서 주별, gh_name별 예약 인원 합계 계산
-	        String query =
-	                "SELECT " +
-	                " check_in, " +
-	                " gh_name, " +
-	                " SUM(people) AS total_people " +
-	                "FROM booking " + 
-	                "WHERE check_in BETWEEN ? AND ? " +
-	                "GROUP BY gh_name, check_in " +
-	                "ORDER BY check_in";
-	        try (PreparedStatement ps2 = conn.prepareStatement(query);) {
-		        ps2.setDate(1, java.sql.Date.valueOf(checkIn));
-		        ps2.setDate(2, java.sql.Date.valueOf(checkOut));
-		        try (ResultSet rs2 = ps2.executeQuery();){
-			        while (rs2.next()) {
-			        	LocalDate visitDate = rs2.getDate("check_in").toLocalDate();
-			            int year = visitDate.getYear();
-			            int month = visitDate.getMonthValue();
-			            int relativeWeek = (int) ChronoUnit.WEEKS.between(checkIn, visitDate) + 1;
-		
-			            String ghName = rs2.getString("gh_name");
-			            int people = rs2.getInt("total_people");
-			            int price = priceMap.getOrDefault(ghName, 0);
-			            int sale = people * price;
-		
-			            String key = String.format("%d년 %02d월 %d주차", year, month, relativeWeek);
-			            result.put(key, result.getOrDefault(key, 0) + sale);
-			        
-			    	}
-		        }
+	        String ghQuery = "SELECT gh_name, price_weekday, price_weekend FROM gh";
+	        ps = conn.prepareStatement(ghQuery);
+	        rs = ps.executeQuery();
+
+	        // 데일리 매출을 계산하기 위해서는 평일과 주말 배열로 생성해서 변수로 만들어야 총 합산 계산 가능
+	        Map<String, int[]> priceMap = new HashMap<>(); // [0] = 평일, [1] = 주말
+	        while (rs.next()) {
+	            String ghName = rs.getString("gh_name");
+	            int weekdayPrice = rs.getInt("price_weekday");
+	            int weekendPrice = rs.getInt("price_weekend");
+	            priceMap.put(ghName, new int[]{weekdayPrice, weekendPrice});
 	        }
-	    }catch (SQLException e) {
-	    	throw new RecordNotFoundException("찾으시는 자료가 없습니다.");
+	        rs.close();
+	        ps.close();
+
+	        // 2. booking에서 예약 정보 가져오기 (예약 취소 제외를 total_price > 0으로 지정)
+	        String bookingQuery =
+	            "SELECT gh_name, check_in, nights, people, total_price " +
+	            "FROM booking " +
+	            "WHERE check_in BETWEEN ? AND ? AND total_price > 0";
+
+	        ps = conn.prepareStatement(bookingQuery);
+	        ps.setDate(1, java.sql.Date.valueOf(checkIn));
+	        ps.setDate(2, java.sql.Date.valueOf(checkOut));
+	        rs = ps.executeQuery();
+	        
+	        // 예약이 하나도 없는 경우 예외 발생
+	        if (!rs.isBeforeFirst() ) {
+	        	throw new RecordNotFoundException("지정된 기간에 예약이 없습니다.");
+	        }
+
+	        while (rs.next()) {
+	            String ghName = rs.getString("gh_name");
+	            LocalDate startDate = rs.getDate("check_in").toLocalDate();
+	            int nights = rs.getInt("nights");
+	            int people = rs.getInt("people");
+
+	            // 평일 과 주말의 매출을 저장하기 위한 변수 생성
+	            int[] prices = priceMap.getOrDefault(ghName, new int[]{0, 0});
+	            int weekdayPrice = prices[0];
+	            int weekendPrice = prices[1];
+
+	            for (int i = 0; i < nights; i++) {
+	                LocalDate currentDate = startDate.plusDays(i);
+	                int year = currentDate.getYear();
+	                int month = currentDate.getMonthValue();
+	                int relativeWeek = (int) ChronoUnit.WEEKS.between(checkIn, currentDate) + 1;
+
+	                // 토요일과 일요일이 주말인 것을 자동 계산해서 데일리 계산에 적용
+	                DayOfWeek day = currentDate.getDayOfWeek();
+	                boolean isWeekend = (day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY);
+
+	                int dailyPrice = isWeekend ? weekendPrice : weekdayPrice;
+	                int dailySale = dailyPrice * people;
+
+	                String key = String.format("%d년 %02d월 %d주차", year, month, relativeWeek);
+	                result.put(key, result.getOrDefault(key, 0) + dailySale);
+	            }
+	        }
+
+	    } catch (SQLException e) {
+	    	System.out.println("데이터를 가져오지 못했습니다.");
+	    } finally {
+	    	closeAll(rs, ps, conn);
 	    }
+
 	    return result;
 	}
 
