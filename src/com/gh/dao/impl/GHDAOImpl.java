@@ -67,9 +67,12 @@ public class GHDAOImpl implements GHDAO {
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		int count = 0;
+		char newTier = 'U';
 
 		try {
 			conn = getConnect();
+			
+			// 방문 횟수 계산
 			String query = "SELECT COUNT(*) AS cnt\r\n" + "FROM booking b\r\n"
 					+ "JOIN booking_detail bd ON b.gh_name = bd.gh_name AND b.check_in = bd.booking_date\r\n"
 					+ "WHERE b.client_id = ? AND bd.booking_status = 'S';";
@@ -93,7 +96,17 @@ public class GHDAOImpl implements GHDAO {
 				c.setTier('U');
 			}
 
-			System.out.println("티어 계산 완료 !");
+			// 객체에 티어 적용
+			c.setTier(newTier);
+			
+			// DB에 티어 업데이트 
+			String updateQuery = "UPDATE client SET tier = ? WHERE client_id =?";
+			ps = conn.prepareStatement(updateQuery);
+			ps.setString(1, String.valueOf(newTier));
+			ps.setString(2, c.getId());
+			ps.executeUpdate();
+			
+			System.out.println("티어 계산 및 DB 반영 완료 ! -> 현재 티어 : " + newTier);
 
 		} finally {
 			closeAll(rs, ps, conn);

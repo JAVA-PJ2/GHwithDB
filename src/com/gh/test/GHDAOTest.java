@@ -13,6 +13,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import com.gh.dao.InsertDummyData;
 import com.gh.dao.impl.GHDAOImpl;
 import com.gh.vo.Booking;
 import com.gh.vo.Client;
@@ -181,7 +182,7 @@ public class GHDAOTest {
 						break;
 					case "2":
 						System.out.println("예약 수정 호출됨\n");
-						Booking b = new Booking("7bc43af7-8c8a-47a7-9aa0-7b0b7ce7e06e", c.getId(), "힐링하우스", 1,
+						Booking b = new Booking("8b971ff7-84ee-4644-823d-4ee34e8339c5", c.getId(), "힐링하우스", 1,
 								LocalDate.of(2025, 06, 5), 3, 17000);
 						try {
 							dao.updateBooking(c, b);
@@ -193,7 +194,7 @@ public class GHDAOTest {
 						System.out.println("예약 취소 호출됨\n");
 
 						try {
-							dao.cancelBooking(c, "7bc43af7-8c8a-47a7-9aa0-7b0b7ce7e06e");
+							dao.cancelBooking(c, "8b971ff7-84ee-4644-823d-4ee34e8339c5");
 						} catch (SQLException e) {
 							System.out.println(e.getMessage());
 						}

@@ -20,15 +20,15 @@ public class InsertDummyData {
 		PreparedStatement ps = null;
 		
 		String[][] clients = {
-				{"user1", "pass1234", "소유나", "E"},
-		        {"user2", "pass2345", "김선호", "I"},
-		        {"user3", "pass3456", "양준용", "E"},
-		        {"user4", "pass4567", "함동윤", "I"},
+				{"user1", "pass1234", "소유나", "E", "U"},
+		        {"user2", "pass2345", "김선호", "I", "U"},
+		        {"user3", "pass3456", "양준용", "E", "U"},
+		        {"user4", "pass4567", "함동윤", "I", "U"},
 		    };
 		
 		try {
 			conn = getConnect();
-			String sql = "INSERT INTO client (client_id, client_password, client_name, mbti) VALUES (?, ?, ?, ?)";
+			String sql = "INSERT INTO client (client_id, client_password, client_name, mbti, tier) VALUES (?, ?, ?, ?, ?)";
 			
 			ps = conn.prepareStatement(sql);
 
@@ -40,6 +40,8 @@ public class InsertDummyData {
 	                ps.setString(4, client[3]); 
 	            else
 	                ps.setNull(4, java.sql.Types.CHAR);
+	            ps.setString(5, client[4]); 
+
 
 	            ps.executeUpdate();
 	        }
