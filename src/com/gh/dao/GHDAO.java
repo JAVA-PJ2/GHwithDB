@@ -15,7 +15,8 @@ public interface GHDAO {
 	/*
 	 * Client
 	 */
-	void login(String id, String password, String type) throws SQLException;
+	void login(String id, String password);
+	void logout();
 	void reserveBooking(Client client, Booking booking) throws SQLException;
 	ArrayList<Guesthouse> searchAvailableGH(LocalDate checkIn, int night, int peopleCnt) throws SQLException;
 	ArrayList<Guesthouse> searchAvailableGH(LocalDate checkIn, int night, int peopleCnt, int price, char mbti) throws SQLException;
@@ -38,4 +39,5 @@ public interface GHDAO {
 	ArrayList<Booking> getAllBookings() throws SQLException;
 	String analzeTendencyByTier(Client c) throws SQLException;
 	ArrayList<Guesthouse> recommendGH(int price, char mbti);
+	
 }

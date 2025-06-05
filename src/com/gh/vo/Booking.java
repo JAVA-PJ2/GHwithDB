@@ -13,6 +13,15 @@ public class Booking {
 	
 	public Booking(){}
 	
+	public Booking(String clientId, String ghName, int peopleCnt, LocalDate checkInDate, int nights) {
+		super();
+		this.clientId = clientId;
+		this.ghName = ghName;
+		this.peopleCnt = peopleCnt;
+		this.checkInDate = checkInDate;
+		this.nights = nights;
+	}
+	
 	public Booking(String bookingId,String clientId, String ghName, int peopleCnt, LocalDate checkInDate, int nights, int totalPrice) {
 		super();
 		this.bookingId = bookingId;
