@@ -250,36 +250,30 @@ public class GHDAOImpl implements GHDAO {
 	}
 
 	
-	public ArrayList<Booking> getBookingsByClientId(String clientId) throws SQLException {
-	    Connection conn = null;
-	    PreparedStatement ps = null;
-	    ResultSet rs = null;
+	public ArrayList<Booking> getBookingsByClientId(String clientId) throws RecordNotFoundException {
 	    ArrayList<Booking> list = new ArrayList<>();
-
-	    try {
-	        conn = getConnect();
-	        String sql = "SELECT * FROM booking WHERE client_id = ?";
-	        ps = conn.prepareStatement(sql);
+	    String sql = "SELECT * FROM booking WHERE client_id = ?";
+	    try (Connection conn = getConnect();
+	    		PreparedStatement ps = conn.prepareStatement(sql);) {
 	        ps.setString(1, clientId);
-	        rs = ps.executeQuery();
-
-	        while (rs.next()) {
-	            String bookingId = rs.getString("booking_id");
-	            String ghName = rs.getString("gh_name"); // 예시: guesthouse 이름
-	            LocalDate checkIn = rs.getDate("check_in").toLocalDate();
-	            int nights = rs.getInt("nights");
-	            int people = rs.getInt("people");
-	            int totalPrice = rs.getInt("total_price");
-	            
-	            // Booking 객체 생성자에 맞춰 수정하세요
-	            Booking booking = new Booking(bookingId, clientId, ghName, people, checkIn, nights, totalPrice);
-	            list.add(booking);
+	        try (ResultSet rs = ps.executeQuery();) {
+		        while (rs.next()) {
+		            String bookingId = rs.getString("booking_id");
+		            String ghName = rs.getString("gh_name"); // 예시: guesthouse 이름
+		            LocalDate checkIn = rs.getDate("check_in").toLocalDate();
+		            int nights = rs.getInt("nights");
+		            int people = rs.getInt("people");
+		            int totalPrice = rs.getInt("total_price");
+		            
+		            // Booking 객체 생성자에 맞춰 수정하세요
+		            Booking booking = new Booking(bookingId, clientId, ghName, people, checkIn, nights, totalPrice);
+		            list.add(booking);
+		        }
 	        }
 
-	    } finally {
-	        closeAll(rs, ps, conn);
+	    }catch (SQLException e) {
+	    	throw new RecordNotFoundException();
 	    }
-
 	    return list;
 	}
 
@@ -675,21 +669,13 @@ public class GHDAOImpl implements GHDAO {
 
 	// 주별 매출 집계
 	@Override
-	public Map<String, Integer> getWeeklySales(LocalDate checkIn, LocalDate checkOut) throws RecordNotFoundException, SQLException {
+	public Map<String, Integer> getWeeklySales(LocalDate checkIn, LocalDate checkOut) throws RecordNotFoundException, DMLException {
 		Map<String, Integer> result = new LinkedHashMap<>();
-
-	    Connection conn = null;
-	    PreparedStatement ps = null;
-	    ResultSet rs = null;
-
-	    try {
-	        conn = getConnect();
-
-	        // 1. gh 테이블에서 요금 정보 가져오기
-	        String ghQuery = "SELECT gh_name, price_weekday, price_weekend FROM gh";
-	        ps = conn.prepareStatement(ghQuery);
-	        rs = ps.executeQuery();
-
+		// 1. gh 테이블에서 요금 정보 가져오기
+	    String ghQuery = "SELECT gh_name, price_weekday, price_weekend FROM gh";
+	    try (Connection conn = getConnect();
+	    		PreparedStatement ps = conn.prepareStatement(ghQuery);
+	    		ResultSet rs = ps.executeQuery();) {
 	        // 데일리 매출을 계산하기 위해서는 평일과 주말 배열로 생성해서 변수로 만들어야 총 합산 계산 가능
 	        Map<String, int[]> priceMap = new HashMap<>(); // [0] = 평일, [1] = 주말
 	        while (rs.next()) {
@@ -698,60 +684,55 @@ public class GHDAOImpl implements GHDAO {
 	            int weekendPrice = rs.getInt("price_weekend");
 	            priceMap.put(ghName, new int[]{weekdayPrice, weekendPrice});
 	        }
-	        rs.close();
-	        ps.close();
-
 	        // 2. booking에서 예약 정보 가져오기 (예약 취소 제외를 total_price > 0으로 지정)
 	        String bookingQuery =
 	            "SELECT gh_name, check_in, nights, people, total_price " +
 	            "FROM booking " +
 	            "WHERE check_in BETWEEN ? AND ? AND total_price > 0";
-
-	        ps = conn.prepareStatement(bookingQuery);
-	        ps.setDate(1, java.sql.Date.valueOf(checkIn));
-	        ps.setDate(2, java.sql.Date.valueOf(checkOut));
-	        rs = ps.executeQuery();
-	        
-	        // 예약이 하나도 없는 경우 예외 발생
-	        if (!rs.isBeforeFirst() ) {
-	        	throw new RecordNotFoundException("지정된 기간에 예약이 없습니다.");
+	        try (PreparedStatement ps2 = conn.prepareStatement(bookingQuery);) {
+		        ps2.setDate(1, java.sql.Date.valueOf(checkIn));
+		        ps2.setDate(2, java.sql.Date.valueOf(checkOut));
+		        try (ResultSet rs2 = ps2.executeQuery();) {
+			        
+			        
+			        // 예약이 하나도 없는 경우 예외 발생
+			        if (!rs2.isBeforeFirst() ) {
+			        	throw new RecordNotFoundException("지정된 기간에 예약이 없습니다.");
+			        }
+		
+			        while (rs2.next()) {
+			            String ghName = rs2.getString("gh_name");
+			            LocalDate startDate = rs2.getDate("check_in").toLocalDate();
+			            int nights = rs2.getInt("nights");
+			            int people = rs2.getInt("people");
+		
+			            // 평일 과 주말의 매출을 저장하기 위한 변수 생성
+			            int[] prices = priceMap.getOrDefault(ghName, new int[]{0, 0});
+			            int weekdayPrice = prices[0];
+			            int weekendPrice = prices[1];
+		
+			            for (int i = 0; i < nights; i++) {
+			                LocalDate currentDate = startDate.plusDays(i);
+			                int year = currentDate.getYear();
+			                int month = currentDate.getMonthValue();
+			                int relativeWeek = (int) ChronoUnit.WEEKS.between(checkIn, currentDate) + 1;
+		
+			                // 토요일과 일요일이 주말인 것을 자동 계산해서 데일리 계산에 적용
+			                DayOfWeek day = currentDate.getDayOfWeek();
+			                boolean isWeekend = (day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY);
+		
+			                int dailyPrice = isWeekend ? weekendPrice : weekdayPrice;
+			                int dailySale = dailyPrice * people;
+		
+			                String key = String.format("%d년 %02d월 %d주차", year, month, relativeWeek);
+			                result.put(key, result.getOrDefault(key, 0) + dailySale);
+			            }
+			        }
+		        }
 	        }
-
-	        while (rs.next()) {
-	            String ghName = rs.getString("gh_name");
-	            LocalDate startDate = rs.getDate("check_in").toLocalDate();
-	            int nights = rs.getInt("nights");
-	            int people = rs.getInt("people");
-
-	            // 평일 과 주말의 매출을 저장하기 위한 변수 생성
-	            int[] prices = priceMap.getOrDefault(ghName, new int[]{0, 0});
-	            int weekdayPrice = prices[0];
-	            int weekendPrice = prices[1];
-
-	            for (int i = 0; i < nights; i++) {
-	                LocalDate currentDate = startDate.plusDays(i);
-	                int year = currentDate.getYear();
-	                int month = currentDate.getMonthValue();
-	                int relativeWeek = (int) ChronoUnit.WEEKS.between(checkIn, currentDate) + 1;
-
-	                // 토요일과 일요일이 주말인 것을 자동 계산해서 데일리 계산에 적용
-	                DayOfWeek day = currentDate.getDayOfWeek();
-	                boolean isWeekend = (day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY);
-
-	                int dailyPrice = isWeekend ? weekendPrice : weekdayPrice;
-	                int dailySale = dailyPrice * people;
-
-	                String key = String.format("%d년 %02d월 %d주차", year, month, relativeWeek);
-	                result.put(key, result.getOrDefault(key, 0) + dailySale);
-	            }
-	        }
-
 	    } catch (SQLException e) {
-	    	System.out.println("데이터를 가져오지 못했습니다.");
-	    } finally {
-	    	closeAll(rs, ps, conn);
+	    	throw new DMLException("데이터를 가져오지 못했습니다.");
 	    }
-
 	    return result;
 	}
 
@@ -862,22 +843,20 @@ public class GHDAOImpl implements GHDAO {
 	@Override
 	public Map<String, Double> calAverageStayByTier() throws DMLException {
 		Map<String, Double> result = new LinkedHashMap<>();
-
-	
-				String query = "SELECT " + "CASE c.tier " + "    WHEN 'b' THEN 'bronze' " + "    WHEN 's' THEN 'silver' "
+		String query = "SELECT " + "CASE c.tier " + "    WHEN 'b' THEN 'bronze' " + "    WHEN 's' THEN 'silver' "
 						+ "    WHEN 'g' THEN 'gold' " + "    ELSE '알 수 없음' " + "END AS tier_name, "
 						+ "AVG(b.nights) AS avg_nights " + // 숙박 일수 평균
 						"FROM client c " + "JOIN booking b ON c.client_id = b.client_id " + "GROUP BY c.tier "
 						+ "ORDER BY avg_nights DESC";
-				try(Connection conn = getConnect(); PreparedStatement ps = conn.prepareStatement(query); ResultSet rs = ps.executeQuery();) {
-				while (rs.next()) {
-					String tierName = rs.getString("tier_name");
-					double avgNights = rs.getDouble("avg_nights");
-					result.put(tierName, avgNights);
-				}
-			} catch (SQLException e) {
-				throw new DMLException("등급별 숙박 일수 평균을 구하는 중 오류 발생: " + e.getMessage());
-			} 
+		try(Connection conn = getConnect(); PreparedStatement ps = conn.prepareStatement(query); ResultSet rs = ps.executeQuery();) {
+			while (rs.next()) {
+				String tierName = rs.getString("tier_name");
+				double avgNights = rs.getDouble("avg_nights");
+				result.put(tierName, avgNights);
+			}
+		} catch (SQLException e) {
+			throw new DMLException("등급별 숙박 일수 평균을 구하는 중 오류 발생: " + e.getMessage());
+		} 
 		return result;
 	}
 
@@ -902,8 +881,8 @@ public class GHDAOImpl implements GHDAO {
 			String canceledQuery = "SELECT COUNT(*) FROM booking_detail WHERE booking_status='C'";
 			try (PreparedStatement ps2 = conn.prepareStatement(canceledQuery);ResultSet rs2 = ps2.executeQuery();) {
 				int canceledBookings = 0;
-				if (rs.next()) {
-					canceledBookings = rs.getInt(1);
+				if (rs2.next()) {
+					canceledBookings = rs2.getInt(1);
 				}
 				// 3️. 취소율 계산
 				cancellationRate = (canceledBookings / (double) totalBookings) * 100.0;
@@ -977,7 +956,7 @@ public class GHDAOImpl implements GHDAO {
 
 	public ArrayList<Booking> getBookings(String clientId) throws RecordNotFoundException {
 		ArrayList<Booking> bookings = new ArrayList<Booking>();
-		String query = "SELECT * FROM booking WHERE client_id=?";
+		String query = "SELECT * FROM booking WHERE client_id=? AND total_price<>0";
 		try (Connection conn = getConnect(); PreparedStatement ps = conn.prepareStatement(query);) {
 			ps.setString(1, clientId);
 			try (ResultSet rs = ps.executeQuery();) {
@@ -997,8 +976,10 @@ public class GHDAOImpl implements GHDAO {
 	public ArrayList<Booking> getAllBookings() throws RecordNotFoundException {
 		ArrayList<Booking> list = new ArrayList<Booking>();
 
-		String query = "SELECT booking_id, client_id, people, " + "check_in, nights,  total_price,  gh_name "
-				+ "FROM booking " + "ORDER BY client_id";
+		String query = "SELECT booking_id, client_id, people, check_in, nights, total_price, gh_name " +
+				"FROM booking " +
+				"WHERE total_price<>0" +
+				"ORDER BY client_id";
 		try (Connection conn = getConnect();
 				PreparedStatement ps = conn.prepareStatement(query);
 				ResultSet rs = ps.executeQuery();) {

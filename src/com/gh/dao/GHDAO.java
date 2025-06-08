@@ -30,10 +30,11 @@ public interface GHDAO {
 	 * Manager
 	 */
 	Map<String, Integer> getWeeklyVisitorCount(LocalDate checkIn, LocalDate checkOut) throws RecordNotFoundException;
-	Map<String, Integer> getWeeklySales(LocalDate checkIn, LocalDate checkOut) throws RecordNotFoundException, SQLException;
+	Map<String, Integer> getWeeklySales(LocalDate checkIn, LocalDate checkOut) throws RecordNotFoundException, DMLException;
 	Guesthouse getMostBookedGH(LocalDate checkIn, LocalDate checkOut) throws RecordNotFoundException;
 	double calcAverageVisitInterval(String clientId) throws RecordNotFoundException;
 	Map<String, Double> calAverageStayByTier() throws DMLException;
+	ArrayList<Booking> getBookingsByClientId(String clientId) throws RecordNotFoundException;
 	double calCancelRate() throws RecordNotFoundException;
 	Client getClientById(String id) throws RecordNotFoundException;
 	ArrayList<Client> getAllClients() throws RecordNotFoundException;
