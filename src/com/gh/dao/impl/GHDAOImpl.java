@@ -899,7 +899,7 @@ public class GHDAOImpl implements GHDAO {
 	public Client getClientById(String id) throws RecordNotFoundException {
 		Client cl = null;
 
-		String query = "SELECT client_id, client_password, client_name, mbti, tier FROM customer WHERE client_id=?";
+		String query = "SELECT client_id, client_password, client_name, mbti, tier FROM client WHERE client_id=?";
 		try (Connection conn = getConnect(); PreparedStatement ps = conn.prepareStatement(query);) {
 			ps.setString(1, id);
 			try (ResultSet rs = ps.executeQuery();) {
