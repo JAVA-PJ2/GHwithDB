@@ -978,7 +978,7 @@ public class GHDAOImpl implements GHDAO {
 
 		String query = "SELECT booking_id, client_id, people, check_in, nights, total_price, gh_name " +
 				"FROM booking " +
-				"WHERE total_price<>0" +
+				"WHERE total_price<>0 " +
 				"ORDER BY client_id";
 		try (Connection conn = getConnect();
 				PreparedStatement ps = conn.prepareStatement(query);
