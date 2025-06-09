@@ -165,8 +165,8 @@ public class GHDAOTest {
 					System.out.println("1. 예약하기");
 					System.out.println("2. 예약 수정");
 					System.out.println("3. 예약 취소");
-					System.out.println("4. 예약 가능 게스트하우스 조회");
-					System.out.println("5. 예약 가능 게스트하우스 조회");
+					System.out.println("4. 기간, 인원수 기준 예약가능한 게스트하우스 조회");
+					System.out.println("5. 기간, 인원수, 가격대, 성향, 취소율 기준 예약 가능한 게스트하우스 조회");
 					System.out.println("6. 내 정보 보기");
 					System.out.println("0. 로그아웃");
 					System.out.print("선택 : ");
@@ -175,7 +175,7 @@ public class GHDAOTest {
 					switch (clientChoice) {
 					case "1":
 						System.out.println("예약하기 호출됨\n");
-						Booking booking = new Booking(c.getId(), "바다풍경게하", 2, LocalDate.of(2025, 06, 9), 3);
+						Booking booking = new Booking(c.getId(), "바다풍경게하", 2, LocalDate.of(2025, 06, 13), 3);
 
 						try {
 							dao.reserveBooking(c, booking);
@@ -197,7 +197,7 @@ public class GHDAOTest {
 						System.out.println("예약 취소 호출됨\n");
 
 						try {
-							dao.cancelBooking(c, "cac24194-0976-495a-bc15-67cfcb4e41d8");
+							dao.cancelBooking(c, "1cf70cf3-fc92-4e2b-9497-39c38aa974bf");
 						} catch (Exception e) {
 							System.out.println(e.getMessage());
 						}
