@@ -346,7 +346,7 @@ public class GHDAOTest {
 						System.out.println("티어별 평균 숙박일수 호출됨\n");
 
 						try {
-							dao.calAverageStayByTier();
+							System.out.println(dao.calAverageStayByTier());
 						} catch (Exception e) {
 							System.out.println(e.getMessage());
 						}
