@@ -356,7 +356,7 @@ public class GHDAOImpl implements GHDAO {
 		try (Connection conn = getConnect();PreparedStatement ps = conn.prepareStatement(query);) {
 			String uuid = UUID.randomUUID().toString();
 			booking.setBookingId(uuid);
-			if (canBook(booking.getBookingId(), booking.getCheckInDate(), booking.getNights(),
+			if (canBook(booking.getGhName(),booking.getCheckInDate(), booking.getNights(),
 					booking.getPeopleCnt())) {
 				Guesthouse gh = getGuesthouse(booking.getGhName());
 				if (gh == null) {
