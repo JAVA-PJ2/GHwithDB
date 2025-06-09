@@ -563,11 +563,6 @@ public class GHDAOImpl implements GHDAO {
 			System.out.println("고객 정보가 없습니다.");
 			return;
 		}
-		try {
-			applyTier(c);
-		} catch (SQLException e) {
-			throw new RecordNotFoundException();
-		}
 		String bookingCount = "SELECT COUNT(*) FROM booking WHERE client_id=?";
 		try (Connection conn = getConnect();PreparedStatement ps = conn.prepareStatement(bookingCount);) {
 			// 1) 고객 등급 조회
