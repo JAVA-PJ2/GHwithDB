@@ -563,6 +563,11 @@ public class GHDAOImpl implements GHDAO {
 			System.out.println("고객 정보가 없습니다.");
 			return;
 		}
+		try {
+			applyTier(c);
+		} catch (SQLException e) {
+			throw new RecordNotFoundException();
+		}
 		String bookingCount = "SELECT COUNT(*) FROM booking WHERE client_id=?";
 		try (Connection conn = getConnect();PreparedStatement ps = conn.prepareStatement(bookingCount);) {
 			// 1) 고객 등급 조회
@@ -605,14 +610,14 @@ public class GHDAOImpl implements GHDAO {
 								bookingDate != null ? bookingDate : "-");
 						if (bookingStatus == null)
 							bookingStatus = "알 수 없음";
-						switch (bookingStatus.toLowerCase()) {
-							case "checked-in":
+						switch (bookingStatus) {
+							case "S":
 								checkedIn.append(info);
 								break;
-							case "upcoming":
+							case "R":
 								upcoming.append(info);
 								break;
-							case "canceled":
+							case "C":
 								canceled.append(info);
 								break;
 							default:
@@ -672,7 +677,7 @@ public class GHDAOImpl implements GHDAO {
 	public Map<String, Integer> getWeeklySales(LocalDate checkIn, LocalDate checkOut) throws RecordNotFoundException, DMLException {
 		Map<String, Integer> result = new LinkedHashMap<>();
 		// 1. gh 테이블에서 요금 정보 가져오기
-	    String ghQuery = "SELECT gh_name, price_weekday, price_weekend FROM gh";
+	    String ghQuery = "SELECT gh_name, price_weekday, price_weekend FROM guesthouse";
 	    try (Connection conn = getConnect();
 	    		PreparedStatement ps = conn.prepareStatement(ghQuery);
 	    		ResultSet rs = ps.executeQuery();) {
